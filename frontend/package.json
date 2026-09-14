@@ -1,0 +1,20 @@
+{
+  "name": "route-planning-frontend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "format": "prettier --write src index.html vite.config.js",
+    "format:check": "prettier --check src index.html vite.config.js"
+  },
+  "dependencies": {
+    "vue": "^3.5.18"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.1",
+    "vite": "^7.1.3",
+    "prettier": "^3.6.2"
+  }
+}
