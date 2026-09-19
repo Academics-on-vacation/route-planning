@@ -1,55 +1,101 @@
-<template>
-  <div class="shell">
-    <div class="tmp">Шапка?</div>
+<script setup>
+import { computed, onMounted } from 'vue'
 
-    <main class="grid">
-      <LeftBar></LeftBar>
-      <div class="col-main">
-        <Map></Map>
-        <div class="tmp">
-          Диаграммы Ганта
-        </div>
-      </div>
-    </main>
+import GanttPanel from './components/GanttPanel.vue'
+import ListPanel from './components/ListPanel.vue'
+import MapView from './components/MapView.vue'
+import {
+  SKILLS,
+  loadRegion,
+  loadRegions,
+  metrics,
+  rebuild,
+  state,
+  stopIndex,
+  unassignedIndex,
+} from './store.js'
+import { hhmm, toMinutes } from './time.js'
 
-  </div>
-</template>
-<script setup lang="ts">
-import Map from "./components/Map.vue";
-import LeftBar from "./components/LeftBar.vue";
+onMounted(loadRegions)
+
+const request = computed(() =>
+  state.selected == null ? null : state.requests[String(state.selected)] ?? null,
+)
+const placement = computed(() =>
+  state.selected == null ? null : stopIndex.value[String(state.selected)] ?? null,
+)
+const reason = computed(() =>
+  state.selected == null ? null : unassignedIndex.value[String(state.selected)] ?? null,
+)
+
+const slack = computed(() => {
+  if (!request.value || !placement.value) return null
+  return toMinutes(request.value.window_end) - toMinutes(placement.value.stop.end_at)
+})
+
+const onRegion = (e) => loadRegion(Number(e.target.value))
 </script>
 
-<style scoped>
-.shell {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
-.grid {
-  flex: 1;
-  min-height: 0;
-  display: grid;
-  grid-template-columns: 330px minmax(0, 1fr);
-  gap: 8px;
-  padding: 8px;
-}
-.col-main {
-  display: grid;
-  grid-template-rows: minmax(0, 1.55fr) minmax(0, 1fr);
-  gap: 8px;
-  min-height: 0;
-}
+<template>
+  <div class="app">
+    <header>
+      <select :value="state.regionId" @change="onRegion">
+        <option v-for="r in state.regions" :key="r.id" :value="r.id">
+          {{ r.title }}
+        </option>
+      </select>
 
-.tmp {
-  background: rgba(0, 255, 255, 0.2);
-  border: 3px dashed #2a4893;
-  padding: 10px;
-  border-radius: 25px;
-  display: flex;
-  align-items: center;
-  align-content: center;
-  justify-content: center;
-  font-size: larger;
-}
-</style>
+      <button :disabled="state.loading" @click="rebuild()">
+        {{ state.loading ? 'считаю…' : 'пересчитать' }}
+      </button>
+
+      <small v-if="metrics">
+        заявок {{ metrics.assigned }}/{{ metrics.requests_total }} ·
+        исполнителей {{ metrics.engineers_used }} ·
+        пробег {{ Math.round(metrics.total_distance_km) }} км ·
+        в пути {{ metrics.total_travel_min }} мин ·
+        простой {{ metrics.total_wait_min }} мин ·
+        нарушений окон {{ metrics.window_violations }}
+      </small>
+
+      <p v-if="state.error"><b>Ошибка:</b> {{ state.error }}</p>
+    </header>
+
+    <div class="main">
+      <div class="col">
+        <ListPanel style="flex: 1; min-height: 0" />
+
+        <div v-if="request" class="detail">
+          <hr />
+          <b>{{ request.id }}</b>
+          {{ request.address ?? request.district ?? '' }}<br />
+          <small>
+            окно {{ hhmm(request.window_start) }}–{{ hhmm(request.window_end) }},
+            работа {{ request.duration_min }} мин,
+            {{ SKILLS[request.skill] ?? request.skill }}
+          </small>
+          <div v-if="placement">
+            <small>
+              приезд {{ hhmm(placement.stop.arrive_at) }},
+              работа {{ hhmm(placement.stop.start_at) }}–{{ hhmm(placement.stop.end_at) }},
+              плечо {{ placement.stop.travel_km?.toFixed(1) }} км /
+              {{ placement.stop.travel_min }} мин<br />
+              {{ placement.route.engineer_name }},
+              визит {{ placement.seq }} из {{ placement.total }},
+              запас до окна
+              <b>{{ slack == null ? '—' : slack < 0 ? `просрочка ${-slack} мин` : `${slack} мин` }}</b>
+            </small>
+          </div>
+          <div v-else-if="reason">
+            <small>не назначена: {{ reason.reason_text ?? reason.reason }}</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="col">
+        <MapView />
+        <GanttPanel style="flex: 1; min-height: 0" />
+      </div>
+    </div>
+  </div>
+</template>

@@ -1,0 +1,94 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+}
+
+.app {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.main {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 320px 1fr;
+}
+
+.col {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.map {
+  flex: 1;
+  min-height: 200px;
+}
+
+.detail {
+  flex: none;
+  max-height: 40%;
+  overflow: auto;
+}
+
+
+.row {
+  display: flex;
+  align-items: stretch;
+}
+
+.row-name {
+  width: 140px;
+  flex: none;
+}
+
+.track {
+  position: relative;
+  flex: 1;
+  height: 24px;
+}
+
+.track > * {
+  position: absolute;
+}
+
+.bar {
+  top: 2px;
+  height: 20px;
+  overflow: hidden;
+}
+
+.wait {
+  top: 7px;
+  height: 10px;
+}
+
+.travel {
+  top: 11px;
+  height: 2px;
+}
+
+.tick {
+  top: 0;
+  bottom: 0;
+  width: 1px;
+}
+
+.map-pin {
+  border-radius: 50%;
+  border: 2px solid #fff;
+}
