@@ -40,6 +40,15 @@ onBeforeUnmount(() => {
 watch([plan, () => state.regionId], redraw)
 watch(() => [state.selected, state.hovered, state.focused], restyle)
 
+function officeIcon() {
+  return L.divIcon({
+    className: '',
+    iconSize: [14, 14],
+    iconAnchor: [7, 7],
+    html: '<div class="map-office"></div>',
+  })
+}
+
 function pin(color, size, ring) {
   return L.divIcon({
     className: '',
@@ -63,7 +72,7 @@ function redraw() {
 
   console.log(region);
   if (region) {
-    L.marker([region.office_lat, region.office_lon])
+    L.marker([region.office_lat, region.office_lon], { icon: officeIcon() })
       .bindPopup(`Офис: ${region.office_address ?? ''}`)
       .addTo(layer)
     bounds.push([region.office_lat, region.office_lon])
@@ -148,5 +157,5 @@ function restyle() {
 </script>
 
 <template>
-  <div ref="el" class="map" />
+  <div ref="el" class="flex-1 min-h-[200px] border-b border-hair" />
 </template>

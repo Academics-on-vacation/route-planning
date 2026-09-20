@@ -59,49 +59,61 @@ const color = (engineerId) => colorOfEngineer.value[String(engineerId)]
 </script>
 
 <template>
-  <div class="col">
-    <div class="row">
-      <div class="row-name">Расписание</div>
-      <div class="track" style="height: 16px">
-        <small v-for="h in hours" :key="h" class="tick" :style="{ left: `${pct(h)}%`, width: 'auto' }">
+  <div class="flex flex-col min-h-0">
+    <div class="flex items-stretch pr-8 sticky top-0 bg-panel-2 border-b border-hair-2">
+      <div
+        class="w-[140px] flex-none flex items-center px-2 border-r border-hair
+               text-[10.5px] font-semibold uppercase tracking-wider text-muted"
+      >
+        Расписание
+      </div>
+      <div class="relative flex-1 h-4">
+        <small
+          v-for="h in hours"
+          :key="h"
+          class="num absolute top-0 pl-[3px] text-[10px] text-muted"
+          :style="{ left: `${pct(h)}%` }"
+        >
           {{ hhmm(h) }}
         </small>
       </div>
     </div>
 
-    <div class="scroll">
+    <div class="flex-1 min-h-0 overflow-y-auto overscroll-contain">
       <div
         v-for="route in routes"
         :key="route.engineer_id"
-        class="row"
-        :style="{ opacity:  1 }"
+        class="flex items-stretch pr-8 border-b border-hair last:border-b-0
+               hover:bg-panel-2"
       >
-        <div class="row-name">
-          <small>
-<!--            <a href="#" @click.prevent="focusEngineer(route.engineer_id)">-->
-              {{ route.engineer_name }}
-<!--            </a>-->
-          </small>
+        <div
+          class="w-[140px] flex-none flex items-center gap-1.5 px-2
+                 border-r border-hair text-[11.5px] truncate"
+        >
+          <i
+            class="w-1.5 h-1.5 rounded-full shrink-0"
+            :style="{ background: color(route.engineer_id) }"
+          />
+          <span class="truncate">{{ route.engineer_name }}</span>
         </div>
 
-        <div class="track">
-          <!-- часовая сетка -->
+        <div class="relative flex-1 h-[26px]">
           <span
             v-for="h in hours"
             :key="h"
-            class="tick"
-            :style="{ left: `${pct(h)}%`, background: '#ddd' }"
+            class="absolute inset-y-0 w-px bg-hair"
+            :style="{ left: `${pct(h)}%` }"
           />
 
           <template v-for="stop in route.stops" :key="stop.request_id">
             <span
               v-if="travel(stop)"
-              class="travel"
+              class="absolute top-3 h-0.5 rounded-full"
               :style="{ ...travel(stop), background: color(route.engineer_id) }"
             />
             <span
               v-if="band(stop.arrive_at, stop.start_at)"
-              class="wait"
+              class="absolute top-2 h-2.5 opacity-25"
               :style="{
                 ...band(stop.arrive_at, stop.start_at),
                 background: color(route.engineer_id),
@@ -111,15 +123,10 @@ const color = (engineerId) => colorOfEngineer.value[String(engineerId)]
             />
             <span
               v-if="band(stop.start_at, stop.end_at)"
-              class="bar"
+              class="absolute top-[3px] h-5 rounded-[2px] overflow-hidden"
               :style="{
                 ...band(stop.start_at, stop.end_at),
                 background: color(route.engineer_id),
-                outline: false
-                  ? '2px solid #000'
-                  : false
-                    ? '1px solid #000'
-                    : 'none',
               }"
               :title="`${stop.request_id}: ${hhmm(stop.start_at)}–${hhmm(stop.end_at)}`"
             />
