@@ -1,9 +1,9 @@
 <script setup>
-import { computed, onMounted } from 'vue'
+import { computed, onMounted } from "vue";
 
-import GanttPanel from './components/GanttPanel.vue'
-import ListPanel from './components/ListPanel.vue'
-import MapView from './components/MapView.vue'
+import GanttPanel from "./components/GanttPanel.vue";
+import ListPanel from "./components/ListPanel.vue";
+import MapView from "./components/MapView.vue";
 import {
   SKILLS,
   loadRegion,
@@ -13,25 +13,33 @@ import {
   state,
   stopIndex,
   unassignedIndex,
-} from './store.js'
-import { hhmm, toMinutes } from './time.js'
+} from "./store.js";
+import { hhmm, toMinutes } from "./time.js";
 
-onMounted(loadRegions)
+onMounted(loadRegions);
 
 const request = computed(() =>
-  state.selected == null ? null : state.requests[String(state.selected)] ?? null,
-)
+  state.selected == null
+    ? null
+    : (state.requests[String(state.selected)] ?? null),
+);
 const placement = computed(() =>
-  state.selected == null ? null : stopIndex.value[String(state.selected)] ?? null,
-)
+  state.selected == null
+    ? null
+    : (stopIndex.value[String(state.selected)] ?? null),
+);
 const reason = computed(() =>
-  state.selected == null ? null : unassignedIndex.value[String(state.selected)] ?? null,
-)
+  state.selected == null
+    ? null
+    : (unassignedIndex.value[String(state.selected)] ?? null),
+);
 
 const slack = computed(() => {
-  if (!request.value || !placement.value) return null
-  return toMinutes(request.value.window_end) - toMinutes(placement.value.stop.end_at)
-})
+  if (!request.value || !placement.value) return null;
+  return (
+    toMinutes(request.value.window_end) - toMinutes(placement.value.stop.end_at)
+  );
+});
 
 // const summary = computed(() => {
 //   const m = metrics.value
@@ -52,24 +60,24 @@ const slack = computed(() => {
     <header class="flex-none bg-black text-white border-b-[3px] border-brand">
       <div class="flex flex-wrap items-center gap-x-4 gap-y-2 px-3 py-2.5">
         <div class="flex items-center gap-2.5">
-<!--          <span-->
-<!--            class="w-7 h-7 rounded-lg bg-brand grid place-items-center shrink-0"-->
-<!--            aria-hidden="true"-->
-<!--          >-->
-<!--            <svg viewBox="0 0 24 24" class="w-4.5 h-4.5">-->
-<!--              <path-->
-<!--                d="M4 17 L9 8 L13 14 L20 5"-->
-<!--                fill="none"-->
-<!--                stroke="#000"-->
-<!--                stroke-width="2.6"-->
-<!--                stroke-linecap="round"-->
-<!--                stroke-linejoin="round"-->
-<!--              />-->
-<!--            </svg>-->
-<!--          </span>-->
+          <!--          <span-->
+          <!--            class="w-7 h-7 rounded-lg bg-brand grid place-items-center shrink-0"-->
+          <!--            aria-hidden="true"-->
+          <!--          >-->
+          <!--            <svg viewBox="0 0 24 24" class="w-4.5 h-4.5">-->
+          <!--              <path-->
+          <!--                d="M4 17 L9 8 L13 14 L20 5"-->
+          <!--                fill="none"-->
+          <!--                stroke="#000"-->
+          <!--                stroke-width="2.6"-->
+          <!--                stroke-linecap="round"-->
+          <!--                stroke-linejoin="round"-->
+          <!--              />-->
+          <!--            </svg>-->
+          <!--          </span>-->
           <span class="leading-tight">
-<!--            <span class="block font-semibold tracking-tight">Планирование выездов</span>-->
-<!--            <span class="block text-[10.5px] text-white/45">билайн бизнес</span>-->
+            <!--            <span class="block font-semibold tracking-tight">Планирование выездов</span>-->
+            <!--            <span class="block text-[10.5px] text-white/45">билайн бизнес</span>-->
           </span>
         </div>
 
@@ -98,23 +106,29 @@ const slack = computed(() => {
             </dt>
             <dd
               class="num text-[14px]"
-              :class="s.bad ? 'text-crit' : s.lead ? 'text-brand font-semibold' : 'text-white'"
+              :class="
+                s.bad
+                  ? 'text-crit'
+                  : s.lead
+                    ? 'text-brand font-semibold'
+                    : 'text-white'
+              "
             >
               {{ s.v }}
             </dd>
           </div>
         </dl>
 
-<!--        <button-->
-<!--          class="ml-auto lg:ml-0 px-3.5 py-1.5 rounded-lg bg-brand text-black font-semibold-->
-<!--                 text-[12.5px] hover:bg-brand-deep active:translate-y-px-->
-<!--                 disabled:opacity-40 disabled:cursor-default cursor-pointer-->
-<!--                 transition-all"-->
-<!--          :disabled="state.loading"-->
-<!--          @click="rebuild()"-->
-<!--        >-->
-<!--          {{ state.loading ? 'считаю…' : 'Пересчитать' }}-->
-<!--        </button>-->
+        <!--        <button-->
+        <!--          class="ml-auto lg:ml-0 px-3.5 py-1.5 rounded-lg bg-brand text-black font-semibold-->
+        <!--                 text-[12.5px] hover:bg-brand-deep active:translate-y-px-->
+        <!--                 disabled:opacity-40 disabled:cursor-default cursor-pointer-->
+        <!--                 transition-all"-->
+        <!--          :disabled="state.loading"-->
+        <!--          @click="rebuild()"-->
+        <!--        >-->
+        <!--          {{ state.loading ? 'считаю…' : 'Пересчитать' }}-->
+        <!--        </button>-->
       </div>
 
       <p
@@ -132,13 +146,12 @@ const slack = computed(() => {
 
         <div
           v-if="request"
-          class="flex-none max-h-[42%] overflow-auto px-3 py-2.5
-                 border-t-2 border-brand bg-panel-2"
+          class="flex-none max-h-[42%] overflow-auto px-3 py-2.5 border-t-2 border-brand bg-panel-2"
         >
           <div class="flex items-baseline gap-2">
             <b class="num text-[14px]">{{ request.id }}</b>
             <span class="text-[11.5px] text-muted truncate">
-              {{ request.address ?? request.district ?? '' }}
+              {{ request.address ?? request.district ?? "" }}
             </span>
           </div>
 
@@ -166,7 +179,9 @@ const slack = computed(() => {
               <div>
                 <dt class="text-muted">Работа с</dt>
                 <dd class="num">
-                  {{ hhmm(placement.stop.start_at) }}–{{ hhmm(placement.stop.end_at) }}
+                  {{ hhmm(placement.stop.start_at) }}–{{
+                    hhmm(placement.stop.end_at)
+                  }}
                 </dd>
               </div>
               <div>
@@ -184,7 +199,7 @@ const slack = computed(() => {
                 >
                   {{
                     slack == null
-                      ? '—'
+                      ? "—"
                       : slack < 0
                         ? `просрочка ${-slack} мин`
                         : `${slack} мин`
@@ -194,15 +209,17 @@ const slack = computed(() => {
               <div class="col-span-2 pt-1 mt-0.5 border-t border-hair">
                 <dt class="text-muted">Исполнитель</dt>
                 <dd>
-                  {{ placement.route.engineer_name }} ·
-                  визит {{ placement.seq }} из {{ placement.total }}
+                  {{ placement.route.engineer_name }} · визит
+                  {{ placement.seq }} из {{ placement.total }}
                 </dd>
               </div>
             </template>
 
             <div v-else-if="reason" class="col-span-2">
               <dt class="font-semibold text-crit">Не назначена</dt>
-              <dd class="text-muted">{{ reason.reason_text ?? reason.reason }}</dd>
+              <dd class="text-muted">
+                {{ reason.reason_text ?? reason.reason }}
+              </dd>
             </div>
           </dl>
         </div>

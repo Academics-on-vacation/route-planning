@@ -1,69 +1,65 @@
 <script setup>
+import { computed } from "vue";
 
-import { computed } from 'vue'
-
-import {
-  colorOfEngineer,
-  routes,
-  state,
-} from '../store.js'
-import { hhmm, toMinutes } from '../time.js'
+import { colorOfEngineer, routes, state } from "../store.js";
+import { hhmm, toMinutes } from "../time.js";
 
 const bounds = computed(() => {
-  let from = Infinity
-  let to = -Infinity
+  let from = Infinity;
+  let to = -Infinity;
   for (const route of routes.value) {
-    console.log('route', route)
-    const start = toMinutes(route.start?.at)
-    if (start != null) from = Math.min(from, start)
-    const finish = toMinutes(route.finish_at)
-    if (finish != null) to = Math.max(to, finish)
+    console.log("route", route);
+    const start = toMinutes(route.start?.at);
+    if (start != null) from = Math.min(from, start);
+    const finish = toMinutes(route.finish_at);
+    if (finish != null) to = Math.max(to, finish);
     for (const s of route.stops) {
-      const a = toMinutes(s.arrive_at)
-      if (a != null) from = Math.min(from, a - (s.travel_min ?? 0))
-      const e = toMinutes(s.end_at)
-      if (e != null) to = Math.max(to, e)
+      const a = toMinutes(s.arrive_at);
+      if (a != null) from = Math.min(from, a - (s.travel_min ?? 0));
+      const e = toMinutes(s.end_at);
+      if (e != null) to = Math.max(to, e);
     }
-    console.log(start, finish)
+    console.log(start, finish);
   }
-  if (!Number.isFinite(from)) return { from: 540, to: 1320 }
-  return { from: Math.floor(from / 60) * 60, to: Math.ceil(to / 60) * 60 }
-})
+  if (!Number.isFinite(from)) return { from: 540, to: 1320 };
+  return { from: Math.floor(from / 60) * 60, to: Math.ceil(to / 60) * 60 };
+});
 
-const span = computed(() => Math.max(1, bounds.value.to - bounds.value.from))
-const pct = (m) => ((m - bounds.value.from) / span.value) * 100
+const span = computed(() => Math.max(1, bounds.value.to - bounds.value.from));
+const pct = (m) => ((m - bounds.value.from) / span.value) * 100;
 
 const hours = computed(() => {
-  const out = []
-  for (let m = bounds.value.from; m <= bounds.value.to; m += 60) out.push(m)
-  return out
-})
+  const out = [];
+  for (let m = bounds.value.from; m <= bounds.value.to; m += 60) out.push(m);
+  return out;
+});
 
 function band(fromIso, toIso) {
-  const a = toMinutes(fromIso)
-  const b = toMinutes(toIso)
-  if (a == null || b == null || b <= a) return null
-  return { left: `${pct(a)}%`, width: `${((b - a) / span.value) * 100}%` }
+  const a = toMinutes(fromIso);
+  const b = toMinutes(toIso);
+  if (a == null || b == null || b <= a) return null;
+  return { left: `${pct(a)}%`, width: `${((b - a) / span.value) * 100}%` };
 }
 
 function travel(stop) {
-  const arrive = toMinutes(stop.arrive_at)
-  if (arrive == null || !stop.travel_min) return null
+  const arrive = toMinutes(stop.arrive_at);
+  if (arrive == null || !stop.travel_min) return null;
   return {
     left: `${pct(arrive - stop.travel_min)}%`,
     width: `${(stop.travel_min / span.value) * 100}%`,
-  }
+  };
 }
 
-const color = (engineerId) => colorOfEngineer.value[String(engineerId)]
+const color = (engineerId) => colorOfEngineer.value[String(engineerId)];
 </script>
 
 <template>
   <div class="flex flex-col min-h-0">
-    <div class="flex items-stretch pr-8 sticky top-0 bg-panel-2 border-b border-hair-2">
+    <div
+      class="flex items-stretch pr-8 sticky top-0 bg-panel-2 border-b border-hair-2"
+    >
       <div
-        class="w-[140px] flex-none flex items-center px-2 border-r border-hair
-               text-[10.5px] font-semibold uppercase tracking-wider text-muted"
+        class="w-[140px] flex-none flex items-center px-2 border-r border-hair text-[10.5px] font-semibold uppercase tracking-wider text-muted"
       >
         Расписание
       </div>
@@ -83,12 +79,10 @@ const color = (engineerId) => colorOfEngineer.value[String(engineerId)]
       <div
         v-for="route in routes"
         :key="route.engineer_id"
-        class="flex items-stretch pr-8 border-b border-hair last:border-b-0
-               hover:bg-panel-2"
+        class="flex items-stretch pr-8 border-b border-hair last:border-b-0 hover:bg-panel-2"
       >
         <div
-          class="w-[140px] flex-none flex items-center gap-1.5 px-2
-                 border-r border-hair text-[11.5px] truncate"
+          class="w-[140px] flex-none flex items-center gap-1.5 px-2 border-r border-hair text-[11.5px] truncate"
         >
           <i
             class="w-1.5 h-1.5 rounded-full shrink-0"

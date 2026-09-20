@@ -1,9 +1,9 @@
+import json
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import text
-import json
 from fastapi.responses import JSONResponse
-
+from sqlalchemy import text
 
 from app.db import get_session
 
@@ -29,28 +29,27 @@ async def database_health() -> dict[str, str]:
     raise RuntimeError("database session was not created")
 
 
-
 @app.get("/api/plan")
 def test_plan():
-    return load_json('./app/mock/plan.json')
+    return load_json("./app/mock/plan.json")
 
 
 @app.get("/api/regions")
 def test_regions():
-    return load_json('./app/mock/regions.json')
+    return load_json("./app/mock/regions.json")
 
 
 @app.get("/api/regions/{regionId}/requests")
 def test_requests(regionId: str):
-    return load_json('./app/mock/requests.json')
+    return load_json("./app/mock/requests.json")
 
 
 @app.get("/api/regions/{regionId}/engineers")
 def test_engineers():
-    return load_json('./app/mock/engineers.json')
+    return load_json("./app/mock/engineers.json")
 
 
 def load_json(filename: str):
-    with open(filename, encoding='utf-8') as f:
+    with open(filename, encoding="utf-8") as f:
         data = json.load(f)
     return JSONResponse(content=data)

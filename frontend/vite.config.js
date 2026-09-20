@@ -1,18 +1,18 @@
-import { defineConfig } from 'vite'
-import vue from '@vitejs/plugin-vue'
-import tailwindcss from '@tailwindcss/vite'
+import { defineConfig } from "vite";
+import vue from "@vitejs/plugin-vue";
+import tailwindcss from "@tailwindcss/vite";
 
 const proxy = {
-  '/api': {
-    target: 'http://localhost:8000',
+  "/api": {
+    target: "http://localhost:8000",
     changeOrigin: true,
-    rewrite: (p) => p.replace(/^\/api/, ''),
+    rewrite: (p) => p.replace(/^\/api/, ""),
   },
-}
+};
 
 export default defineConfig({
   plugins: [vue(), tailwindcss()],
-  base: '/',
+  base: "/",
   server: { port: 5173, proxy },
   preview: { port: 4173, proxy },
-})
+});

@@ -1,31 +1,25 @@
 <script setup>
+import { watch } from "vue";
 
-import { watch } from 'vue'
+import { routes, state, colorOfEngineer, unassigned } from "../store.js";
+import { hhmm } from "../time.js";
 
-import {
-  routes,
-  state,
-  colorOfEngineer,
-  unassigned,
-} from '../store.js'
-import { hhmm } from '../time.js'
-
-const nodes = new Map()
+const nodes = new Map();
 const registerNode = (id, el) => {
-  if (el) nodes.set(String(id), el)
-  else nodes.delete(String(id))
-}
+  if (el) nodes.set(String(id), el);
+  else nodes.delete(String(id));
+};
 
 watch(
   () => state.selected,
   (id) => {
-    if (id == null) return
-    nodes.get(String(id))?.scrollIntoView({ block: 'nearest' })
+    if (id == null) return;
+    nodes.get(String(id))?.scrollIntoView({ block: "nearest" });
   },
-  { flush: 'post' },
-)
+  { flush: "post" },
+);
 
-const districtOf = (id) => state.requests[String(id)]?.district ?? ''
+const districtOf = (id) => state.requests[String(id)]?.district ?? "";
 </script>
 
 <template>
@@ -33,8 +27,7 @@ const districtOf = (id) => state.requests[String(id)]?.district ?? ''
     <div class="flex-1 min-h-0 overflow-y-auto overscroll-contain">
       <section v-for="route in routes" :key="route.engineer_id">
         <h3
-          class="sticky top-0 z-1 px-2.5 py-1.5 bg-panel-2
-                 border-y border-hair text-[12.5px] font-semibold"
+          class="sticky top-0 z-1 px-2.5 py-1.5 bg-panel-2 border-y border-hair text-[12.5px] font-semibold"
         >
           <i
             class="inline-block w-2.5 h-2.5 rounded-full mr-1.5"
@@ -47,7 +40,9 @@ const districtOf = (id) => state.requests[String(id)]?.district ?? ''
           </small>
         </h3>
 
-        <ol class="list-decimal pl-8 pt-0.5 pb-1.5 marker:text-hair-2 marker:text-[11px]">
+        <ol
+          class="list-decimal pl-8 pt-0.5 pb-1.5 marker:text-hair-2 marker:text-[11px]"
+        >
           <li
             v-for="stop in route.stops"
             :key="stop.request_id"
@@ -56,15 +51,16 @@ const districtOf = (id) => state.requests[String(id)]?.district ?? ''
           >
             {{ hhmm(stop.start_at) }} — {{ stop.request_id }}
             {{ districtOf(stop.request_id) }}
-            <template v-if="stop.wait_min > 15">(простой {{ stop.wait_min }} мин)</template>
+            <template v-if="stop.wait_min > 15"
+              >(простой {{ stop.wait_min }} мин)</template
+            >
           </li>
         </ol>
       </section>
 
       <section v-if="unassigned.length">
         <h3
-          class="sticky top-0 z-1 px-2.5 py-1.5 bg-panel-2 border-y border-hair
-                 text-[12.5px] font-semibold text-crit"
+          class="sticky top-0 z-1 px-2.5 py-1.5 bg-panel-2 border-y border-hair text-[12.5px] font-semibold text-crit"
         >
           Не назначено: {{ unassigned.length }}
         </h3>
