@@ -2,10 +2,14 @@ import os
 import runpy
 import shutil
 from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 import pytest
 from pydantic import ValidationError
+
+if TYPE_CHECKING:
+    from app.config import Settings
 
 
 @pytest.fixture
@@ -21,7 +25,9 @@ def config_path(tmp_path: Path) -> Path:
 
 
 @pytest.mark.parametrize("directory", [".", "backend", "backend/app"])
-def test_config_does_not_read_env_files(config_path, monkeypatch, directory):
+def test_config_does_not_read_env_files(
+    config_path: Path, monkeypatch: pytest.MonkeyPatch, directory: str
+) -> None:
     monkeypatch.chdir(config_path.parents[2] / directory)
     with patch.dict(os.environ, {}, clear=True):
         with pytest.raises(ValidationError) as error:
@@ -31,7 +37,7 @@ def test_config_does_not_read_env_files(config_path, monkeypatch, directory):
 
 
 @pytest.mark.parametrize("prefix", ["DB", "POSTGRES"])
-def test_settings_from_environment(config_path, prefix):
+def test_settings_from_environment(config_path: Path, prefix: str) -> None:
     environment = {
         f"{prefix}_PASSWORD": "environment_password",
         f"{prefix}_USER": "environment_user",
@@ -40,7 +46,7 @@ def test_settings_from_environment(config_path, prefix):
         "DB_PORT": "5433",
     }
     with patch.dict(os.environ, environment, clear=True):
-        settings = runpy.run_path(str(config_path))["settings"]
+        settings: Settings = runpy.run_path(str(config_path))["settings"]
 
     assert settings.db_host == "postgres"
     assert settings.db_port == 5433
@@ -49,20 +55,20 @@ def test_settings_from_environment(config_path, prefix):
     assert settings.db_password == "environment_password"
 
 
-def test_container_settings_without_env_file(config_path):
+def test_container_settings_without_env_file(config_path: Path) -> None:
     (config_path.parents[2] / ".env").unlink()
     with patch.dict(os.environ, {"DB_PASSWORD": "container_password"}, clear=True):
-        settings = runpy.run_path(str(config_path))["settings"]
+        settings: Settings = runpy.run_path(str(config_path))["settings"]
 
     assert settings.db_password == "container_password"
 
 
-def test_db_variables_take_priority_over_postgres_aliases(config_path):
+def test_db_variables_take_priority_over_postgres_aliases(config_path: Path) -> None:
     with patch.dict(
         os.environ,
         {"DB_PASSWORD": "db_password", "POSTGRES_PASSWORD": "postgres_password"},
         clear=True,
     ):
-        settings = runpy.run_path(str(config_path))["settings"]
+        settings: Settings = runpy.run_path(str(config_path))["settings"]
 
     assert settings.db_password == "db_password"

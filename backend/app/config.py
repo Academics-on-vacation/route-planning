@@ -31,4 +31,5 @@ class Settings(BaseSettings):
         )
 
 
-settings = Settings()
+# BaseSettings loads required fields from the environment, which Pyright cannot infer.
+settings = Settings()  # pyright: ignore[reportCallIssue]
