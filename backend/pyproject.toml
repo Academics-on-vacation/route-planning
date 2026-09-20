@@ -31,3 +31,5 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I"]
+# Ruff's formatter owns line wrapping; some string literals cannot be wrapped.
+ignore = ["E501"]
