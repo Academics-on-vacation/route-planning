@@ -6,6 +6,13 @@ on:
   pull_request:
     branches: [main]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
   backend:
     runs-on: ubuntu-24.04
@@ -35,3 +42,26 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - run: make install
       - run: make check
+
+  deploy:
+    name: Deploy to VM
+    needs: [backend, frontend]
+    runs-on: ubuntu-24.04
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          script: |
+            cd ${{ secrets.VM_PROJECT_PATH }}
+            git fetch origin main
+            git checkout main
+            git reset --hard origin/main
+            make up
