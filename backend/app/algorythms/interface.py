@@ -9,3 +9,6 @@ class Solver:
 
     def solve(self, tickets: list[Ticket], engeneers: list[Engeneer]) -> EngeneerRoute | None:
         pass
+
+    def get_name(self) -> str:
+        return "Solver"
