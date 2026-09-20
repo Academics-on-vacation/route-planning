@@ -1,0 +1,119 @@
+@import "tailwindcss";
+
+@theme {
+  /* фирменные */
+  --color-brand: #ffcc00;
+  --color-brand-deep: #e0b400; /* наведение и текст жёлтым по белому */
+  --color-black: #000000;
+
+  /* поверхности */
+  --color-canvas: #ebe8e2; /* фон под панелями */
+  --color-panel: #ffffff;
+  --color-panel-2: #f7f5f1; /* шапки, подложки */
+  --color-ink: #16161a;
+  --color-muted: #6e6e76;
+  --color-hair: #e7e3db; /* волосяная линия */
+  --color-hair-2: #cfcabf; /* она же, но заметная */
+
+  --color-good: #0ca30c;
+  --color-serious: #ec835a;
+  --color-crit: #d03b3b;
+
+  --font-sans:
+    "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-mono:
+    ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+}
+
+@layer base {
+  html,
+  body,
+  #app {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-canvas text-ink font-sans text-[13px] leading-[1.45] antialiased;
+    margin: 0;
+    /* Цифры стоят в колонку: время 10:00 и номер 34366 везде одной
+       ширины, строки списка читаются столбиком. */
+    font-variant-numeric: tabular-nums;
+  }
+
+  button,
+  select {
+    font: inherit;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-hair-2 rounded-full;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-brand-deep outline-offset-1;
+  }
+}
+
+@layer components {
+  .num {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .panel {
+    @apply bg-panel rounded-xl overflow-hidden;
+    box-shadow:
+      0 1px 2px rgb(0 0 0 / 0.06),
+      0 10px 24px -16px rgb(0 0 0 / 0.35);
+  }
+}
+
+.map-pin {
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.35);
+}
+
+/* Офис — квадрат, чтобы не путался с круглыми точками заявок. */
+.map-office {
+  width: 16px;
+  height: 16px;
+  background: #ffcc00;
+  border: 2px solid #000;
+  transform: rotate(45deg);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.4);
+}
+
+.leaflet-container {
+  font: inherit;
+  background: #e8e5df;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.18);
+}
+
+.leaflet-popup-content {
+  margin: 10px 13px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.leaflet-bar a {
+  border-radius: 6px !important;
+}

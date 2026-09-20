@@ -1,0 +1,822 @@
+{
+  "region_id": 1,
+  "work_date": "2026-08-17",
+  "routes": [
+    {
+      "engineer_id": 1,
+      "engineer_name": "Инженер 01",
+      "start": {
+        "lat": 55.702267,
+        "lon": 37.773852,
+        "at": "2026-08-17T09:00:00"
+      },
+      "stops": [
+        {
+          "seq": 1,
+          "request_id": "34366",
+          "arrive_at": "2026-08-17T09:13:00",
+          "start_at": "2026-08-17T10:00:00",
+          "end_at": "2026-08-17T11:10:00",
+          "wait_min": 47,
+          "travel_min": 13,
+          "travel_km": 4.37
+        },
+        {
+          "seq": 2,
+          "request_id": "33527",
+          "arrive_at": "2026-08-17T11:18:00",
+          "start_at": "2026-08-17T11:18:00",
+          "end_at": "2026-08-17T11:38:00",
+          "wait_min": 0,
+          "travel_min": 8,
+          "travel_km": 4.25
+        },
+        {
+          "seq": 3,
+          "request_id": "68476",
+          "arrive_at": "2026-08-17T11:44:00",
+          "start_at": "2026-08-17T11:44:00",
+          "end_at": "2026-08-17T12:14:00",
+          "wait_min": 0,
+          "travel_min": 6,
+          "travel_km": 1.41
+        },
+        {
+          "seq": 4,
+          "request_id": "10245",
+          "arrive_at": "2026-08-17T12:24:00",
+          "start_at": "2026-08-17T12:24:00",
+          "end_at": "2026-08-17T13:34:00",
+          "wait_min": 0,
+          "travel_min": 10,
+          "travel_km": 4.99
+        },
+        {
+          "seq": 5,
+          "request_id": "23380",
+          "arrive_at": "2026-08-17T13:56:00",
+          "start_at": "2026-08-17T13:56:00",
+          "end_at": "2026-08-17T15:06:00",
+          "wait_min": 0,
+          "travel_min": 22,
+          "travel_km": 10.95
+        },
+        {
+          "seq": 6,
+          "request_id": "47330",
+          "arrive_at": "2026-08-17T15:15:00",
+          "start_at": "2026-08-17T15:15:00",
+          "end_at": "2026-08-17T15:45:00",
+          "wait_min": 0,
+          "travel_min": 9,
+          "travel_km": 4.26
+        },
+        {
+          "seq": 7,
+          "request_id": "71388",
+          "arrive_at": "2026-08-17T15:59:00",
+          "start_at": "2026-08-17T15:59:00",
+          "end_at": "2026-08-17T17:09:00",
+          "wait_min": 0,
+          "travel_min": 14,
+          "travel_km": 7.16
+        },
+        {
+          "seq": 8,
+          "request_id": "21571",
+          "arrive_at": "2026-08-17T17:30:00",
+          "start_at": "2026-08-17T18:00:00",
+          "end_at": "2026-08-17T18:30:00",
+          "wait_min": 30,
+          "travel_min": 21,
+          "travel_km": 7.04
+        },
+        {
+          "seq": 9,
+          "request_id": "30243",
+          "arrive_at": "2026-08-17T18:36:00",
+          "start_at": "2026-08-17T18:36:00",
+          "end_at": "2026-08-17T19:06:00",
+          "wait_min": 0,
+          "travel_min": 6,
+          "travel_km": 0.68
+        },
+        {
+          "seq": 10,
+          "request_id": "86160",
+          "arrive_at": "2026-08-17T19:12:00",
+          "start_at": "2026-08-17T19:12:00",
+          "end_at": "2026-08-17T20:22:00",
+          "wait_min": 0,
+          "travel_min": 6,
+          "travel_km": 1
+        },
+        {
+          "seq": 11,
+          "request_id": "47670",
+          "arrive_at": "2026-08-17T20:28:00",
+          "start_at": "2026-08-17T20:28:00",
+          "end_at": "2026-08-17T20:58:00",
+          "wait_min": 0,
+          "travel_min": 6,
+          "travel_km": 2.75
+        },
+        {
+          "seq": 12,
+          "request_id": "43506",
+          "arrive_at": "2026-08-17T21:25:00",
+          "start_at": "2026-08-17T21:25:00",
+          "end_at": "2026-08-17T21:55:00",
+          "wait_min": 0,
+          "travel_min": 27,
+          "travel_km": 16.05
+        }
+      ],
+      "distance_km": 64.9,
+      "travel_min": 148,
+      "service_min": 550,
+      "wait_min": 77,
+      "finish_at": "2026-08-17T21:55:00",
+      "geometry": null
+    },
+    {
+      "engineer_id": 5,
+      "engineer_name": "Инженер 05",
+      "start": {
+        "lat": 55.702267,
+        "lon": 37.773852,
+        "at": "2026-08-17T09:00:00"
+      },
+      "stops": [
+        {
+          "seq": 1,
+          "request_id": "98182",
+          "arrive_at": "2026-08-17T09:36:00",
+          "start_at": "2026-08-17T10:00:00",
+          "end_at": "2026-08-17T11:10:00",
+          "wait_min": 24,
+          "travel_min": 36,
+          "travel_km": 5.39
+        },
+        {
+          "seq": 2,
+          "request_id": "50219",
+          "arrive_at": "2026-08-17T11:23:00",
+          "start_at": "2026-08-17T11:23:00",
+          "end_at": "2026-08-17T11:53:00",
+          "wait_min": 0,
+          "travel_min": 13,
+          "travel_km": 0.94
+        },
+        {
+          "seq": 3,
+          "request_id": "29890",
+          "arrive_at": "2026-08-17T12:00:00",
+          "start_at": "2026-08-17T12:00:00",
+          "end_at": "2026-08-17T13:10:00",
+          "wait_min": 0,
+          "travel_min": 7,
+          "travel_km": 0.53
+        },
+        {
+          "seq": 4,
+          "request_id": "67554",
+          "arrive_at": "2026-08-17T13:16:00",
+          "start_at": "2026-08-17T13:16:00",
+          "end_at": "2026-08-17T14:26:00",
+          "wait_min": 0,
+          "travel_min": 6,
+          "travel_km": 0.17
+        },
+        {
+          "seq": 5,
+          "request_id": "30769",
+          "arrive_at": "2026-08-17T14:50:00",
+          "start_at": "2026-08-17T14:50:00",
+          "end_at": "2026-08-17T16:00:00",
+          "wait_min": 0,
+          "travel_min": 24,
+          "travel_km": 2.78
+        },
+        {
+          "seq": 6,
+          "request_id": "61540",
+          "arrive_at": "2026-08-17T16:33:00",
+          "start_at": "2026-08-17T16:33:00",
+          "end_at": "2026-08-17T17:43:00",
+          "wait_min": 0,
+          "travel_min": 33,
+          "travel_km": 4.17
+        },
+        {
+          "seq": 7,
+          "request_id": "18754",
+          "arrive_at": "2026-08-17T18:09:00",
+          "start_at": "2026-08-17T18:09:00",
+          "end_at": "2026-08-17T19:19:00",
+          "wait_min": 0,
+          "travel_min": 26,
+          "travel_km": 2.36
+        },
+        {
+          "seq": 8,
+          "request_id": "74198",
+          "arrive_at": "2026-08-17T19:43:00",
+          "start_at": "2026-08-17T20:00:00",
+          "end_at": "2026-08-17T21:10:00",
+          "wait_min": 17,
+          "travel_min": 24,
+          "travel_km": 1.77
+        },
+        {
+          "seq": 9,
+          "request_id": "31260",
+          "arrive_at": "2026-08-17T21:34:00",
+          "start_at": "2026-08-17T21:34:00",
+          "end_at": "2026-08-17T21:54:00",
+          "wait_min": 0,
+          "travel_min": 24,
+          "travel_km": 3.11
+        }
+      ],
+      "distance_km": 21.2,
+      "travel_min": 193,
+      "service_min": 540,
+      "wait_min": 41,
+      "finish_at": "2026-08-17T21:54:00",
+      "geometry": null
+    },
+    {
+      "engineer_id": 6,
+      "engineer_name": "Инженер 06",
+      "start": {
+        "lat": 55.702267,
+        "lon": 37.773852,
+        "at": "2026-08-17T09:00:00"
+      },
+      "stops": [
+        {
+          "seq": 1,
+          "request_id": "32807",
+          "arrive_at": "2026-08-17T09:19:00",
+          "start_at": "2026-08-17T10:00:00",
+          "end_at": "2026-08-17T10:30:00",
+          "wait_min": 41,
+          "travel_min": 19,
+          "travel_km": 1.28
+        },
+        {
+          "seq": 2,
+          "request_id": "24980",
+          "arrive_at": "2026-08-17T11:27:00",
+          "start_at": "2026-08-17T11:27:00",
+          "end_at": "2026-08-17T12:47:00",
+          "wait_min": 0,
+          "travel_min": 57,
+          "travel_km": 12.58
+        },
+        {
+          "seq": 3,
+          "request_id": "41912",
+          "arrive_at": "2026-08-17T13:47:00",
+          "start_at": "2026-08-17T13:47:00",
+          "end_at": "2026-08-17T14:17:00",
+          "wait_min": 0,
+          "travel_min": 60,
+          "travel_km": 13.46
+        },
+        {
+          "seq": 4,
+          "request_id": "73572",
+          "arrive_at": "2026-08-17T14:48:00",
+          "start_at": "2026-08-17T14:48:00",
+          "end_at": "2026-08-17T15:18:00",
+          "wait_min": 0,
+          "travel_min": 31,
+          "travel_km": 4.89
+        },
+        {
+          "seq": 5,
+          "request_id": "48238",
+          "arrive_at": "2026-08-17T15:44:00",
+          "start_at": "2026-08-17T15:44:00",
+          "end_at": "2026-08-17T16:14:00",
+          "wait_min": 0,
+          "travel_min": 26,
+          "travel_km": 3.31
+        },
+        {
+          "seq": 6,
+          "request_id": "15648",
+          "arrive_at": "2026-08-17T17:07:00",
+          "start_at": "2026-08-17T17:07:00",
+          "end_at": "2026-08-17T17:32:00",
+          "wait_min": 0,
+          "travel_min": 53,
+          "travel_km": 9.4
+        },
+        {
+          "seq": 7,
+          "request_id": "17892",
+          "arrive_at": "2026-08-17T18:27:00",
+          "start_at": "2026-08-17T18:27:00",
+          "end_at": "2026-08-17T18:57:00",
+          "wait_min": 0,
+          "travel_min": 55,
+          "travel_km": 9.9
+        },
+        {
+          "seq": 8,
+          "request_id": "48174",
+          "arrive_at": "2026-08-17T19:24:00",
+          "start_at": "2026-08-17T19:24:00",
+          "end_at": "2026-08-17T19:54:00",
+          "wait_min": 0,
+          "travel_min": 27,
+          "travel_km": 2.43
+        },
+        {
+          "seq": 9,
+          "request_id": "57299",
+          "arrive_at": "2026-08-17T20:17:00",
+          "start_at": "2026-08-17T20:17:00",
+          "end_at": "2026-08-17T21:37:00",
+          "wait_min": 0,
+          "travel_min": 23,
+          "travel_km": 1.51
+        }
+      ],
+      "distance_km": 58.8,
+      "travel_min": 351,
+      "service_min": 365,
+      "wait_min": 41,
+      "finish_at": "2026-08-17T21:37:00",
+      "geometry": null
+    },
+    {
+      "engineer_id": 7,
+      "engineer_name": "Инженер 07",
+      "start": {
+        "lat": 55.702267,
+        "lon": 37.773852,
+        "at": "2026-08-17T09:00:00"
+      },
+      "stops": [
+        {
+          "seq": 1,
+          "request_id": "77563",
+          "arrive_at": "2026-08-17T09:19:00",
+          "start_at": "2026-08-17T10:00:00",
+          "end_at": "2026-08-17T11:10:00",
+          "wait_min": 41,
+          "travel_min": 19,
+          "travel_km": 1.32
+        },
+        {
+          "seq": 2,
+          "request_id": "7939",
+          "arrive_at": "2026-08-17T11:38:00",
+          "start_at": "2026-08-17T12:00:00",
+          "end_at": "2026-08-17T13:10:00",
+          "wait_min": 22,
+          "travel_min": 28,
+          "travel_km": 3.81
+        },
+        {
+          "seq": 3,
+          "request_id": "76082",
+          "arrive_at": "2026-08-17T13:45:00",
+          "start_at": "2026-08-17T13:45:00",
+          "end_at": "2026-08-17T14:55:00",
+          "wait_min": 0,
+          "travel_min": 35,
+          "travel_km": 5.97
+        },
+        {
+          "seq": 4,
+          "request_id": "82808",
+          "arrive_at": "2026-08-17T15:17:00",
+          "start_at": "2026-08-17T15:17:00",
+          "end_at": "2026-08-17T16:27:00",
+          "wait_min": 0,
+          "travel_min": 22,
+          "travel_km": 2.16
+        },
+        {
+          "seq": 5,
+          "request_id": "26645",
+          "arrive_at": "2026-08-17T16:57:00",
+          "start_at": "2026-08-17T16:57:00",
+          "end_at": "2026-08-17T17:27:00",
+          "wait_min": 0,
+          "travel_min": 30,
+          "travel_km": 3.42
+        },
+        {
+          "seq": 6,
+          "request_id": "10135",
+          "arrive_at": "2026-08-17T18:13:00",
+          "start_at": "2026-08-17T18:13:00",
+          "end_at": "2026-08-17T19:23:00",
+          "wait_min": 0,
+          "travel_min": 46,
+          "travel_km": 7.61
+        },
+        {
+          "seq": 7,
+          "request_id": "51115",
+          "arrive_at": "2026-08-17T19:36:00",
+          "start_at": "2026-08-17T19:36:00",
+          "end_at": "2026-08-17T20:06:00",
+          "wait_min": 0,
+          "travel_min": 13,
+          "travel_km": 0.87
+        },
+        {
+          "seq": 8,
+          "request_id": "46393",
+          "arrive_at": "2026-08-17T20:14:00",
+          "start_at": "2026-08-17T20:14:00",
+          "end_at": "2026-08-17T21:24:00",
+          "wait_min": 0,
+          "travel_min": 8,
+          "travel_km": 0.66
+        }
+      ],
+      "distance_km": 25.8,
+      "travel_min": 201,
+      "service_min": 480,
+      "wait_min": 63,
+      "finish_at": "2026-08-17T21:24:00",
+      "geometry": null
+    },
+    {
+      "engineer_id": 8,
+      "engineer_name": "Инженер 08",
+      "start": {
+        "lat": 55.702267,
+        "lon": 37.773852,
+        "at": "2026-08-17T09:00:00"
+      },
+      "stops": [
+        {
+          "seq": 1,
+          "request_id": "74949",
+          "arrive_at": "2026-08-17T09:55:00",
+          "start_at": "2026-08-17T10:00:00",
+          "end_at": "2026-08-17T11:10:00",
+          "wait_min": 5,
+          "travel_min": 55,
+          "travel_km": 10.62
+        },
+        {
+          "seq": 2,
+          "request_id": "94409",
+          "arrive_at": "2026-08-17T11:45:00",
+          "start_at": "2026-08-17T12:00:00",
+          "end_at": "2026-08-17T13:10:00",
+          "wait_min": 15,
+          "travel_min": 35,
+          "travel_km": 5.88
+        },
+        {
+          "seq": 3,
+          "request_id": "41077",
+          "arrive_at": "2026-08-17T13:46:00",
+          "start_at": "2026-08-17T13:46:00",
+          "end_at": "2026-08-17T14:56:00",
+          "wait_min": 0,
+          "travel_min": 36,
+          "travel_km": 6.16
+        },
+        {
+          "seq": 4,
+          "request_id": "17349",
+          "arrive_at": "2026-08-17T15:06:00",
+          "start_at": "2026-08-17T15:06:00",
+          "end_at": "2026-08-17T15:31:00",
+          "wait_min": 0,
+          "travel_min": 10,
+          "travel_km": 0.72
+        },
+        {
+          "seq": 5,
+          "request_id": "82388",
+          "arrive_at": "2026-08-17T15:57:00",
+          "start_at": "2026-08-17T15:57:00",
+          "end_at": "2026-08-17T17:07:00",
+          "wait_min": 0,
+          "travel_min": 26,
+          "travel_km": 3.37
+        },
+        {
+          "seq": 6,
+          "request_id": "35675",
+          "arrive_at": "2026-08-17T17:25:00",
+          "start_at": "2026-08-17T17:25:00",
+          "end_at": "2026-08-17T18:35:00",
+          "wait_min": 0,
+          "travel_min": 18,
+          "travel_km": 1.18
+        },
+        {
+          "seq": 7,
+          "request_id": "50104",
+          "arrive_at": "2026-08-17T19:04:00",
+          "start_at": "2026-08-17T19:04:00",
+          "end_at": "2026-08-17T20:14:00",
+          "wait_min": 0,
+          "travel_min": 29,
+          "travel_km": 3.01
+        },
+        {
+          "seq": 8,
+          "request_id": "21367",
+          "arrive_at": "2026-08-17T20:34:00",
+          "start_at": "2026-08-17T20:34:00",
+          "end_at": "2026-08-17T21:54:00",
+          "wait_min": 0,
+          "travel_min": 20,
+          "travel_km": 1.77
+        }
+      ],
+      "distance_km": 32.7,
+      "travel_min": 229,
+      "service_min": 525,
+      "wait_min": 20,
+      "finish_at": "2026-08-17T21:54:00",
+      "geometry": null
+    },
+    {
+      "engineer_id": 10,
+      "engineer_name": "Инженер 10",
+      "start": {
+        "lat": 55.702267,
+        "lon": 37.773852,
+        "at": "2026-08-17T09:00:00"
+      },
+      "stops": [
+        {
+          "seq": 1,
+          "request_id": "37272",
+          "arrive_at": "2026-08-17T09:53:00",
+          "start_at": "2026-08-17T10:00:00",
+          "end_at": "2026-08-17T11:10:00",
+          "wait_min": 7,
+          "travel_min": 53,
+          "travel_km": 9.99
+        },
+        {
+          "seq": 2,
+          "request_id": "53587",
+          "arrive_at": "2026-08-17T11:50:00",
+          "start_at": "2026-08-17T12:00:00",
+          "end_at": "2026-08-17T13:10:00",
+          "wait_min": 10,
+          "travel_min": 40,
+          "travel_km": 7.4
+        },
+        {
+          "seq": 3,
+          "request_id": "93086",
+          "arrive_at": "2026-08-17T13:44:00",
+          "start_at": "2026-08-17T13:44:00",
+          "end_at": "2026-08-17T14:54:00",
+          "wait_min": 0,
+          "travel_min": 34,
+          "travel_km": 5.82
+        },
+        {
+          "seq": 4,
+          "request_id": "57866",
+          "arrive_at": "2026-08-17T15:04:00",
+          "start_at": "2026-08-17T15:04:00",
+          "end_at": "2026-08-17T16:14:00",
+          "wait_min": 0,
+          "travel_min": 10,
+          "travel_km": 0.76
+        },
+        {
+          "seq": 5,
+          "request_id": "87693",
+          "arrive_at": "2026-08-17T16:52:00",
+          "start_at": "2026-08-17T16:52:00",
+          "end_at": "2026-08-17T18:02:00",
+          "wait_min": 0,
+          "travel_min": 38,
+          "travel_km": 5.48
+        },
+        {
+          "seq": 6,
+          "request_id": "76643",
+          "arrive_at": "2026-08-17T18:45:00",
+          "start_at": "2026-08-17T18:45:00",
+          "end_at": "2026-08-17T19:15:00",
+          "wait_min": 0,
+          "travel_min": 43,
+          "travel_km": 6.6
+        },
+        {
+          "seq": 7,
+          "request_id": "98815",
+          "arrive_at": "2026-08-17T19:50:00",
+          "start_at": "2026-08-17T19:50:00",
+          "end_at": "2026-08-17T20:10:00",
+          "wait_min": 0,
+          "travel_min": 35,
+          "travel_km": 4.58
+        },
+        {
+          "seq": 8,
+          "request_id": "84627",
+          "arrive_at": "2026-08-17T20:50:00",
+          "start_at": "2026-08-17T20:50:00",
+          "end_at": "2026-08-17T22:00:00",
+          "wait_min": 0,
+          "travel_min": 40,
+          "travel_km": 8.02
+        }
+      ],
+      "distance_km": 48.7,
+      "travel_min": 293,
+      "service_min": 470,
+      "wait_min": 17,
+      "finish_at": "2026-08-17T22:00:00",
+      "geometry": null
+    },
+    {
+      "engineer_id": 11,
+      "engineer_name": "Инженер 11",
+      "start": {
+        "lat": 55.702267,
+        "lon": 37.773852,
+        "at": "2026-08-17T09:00:00"
+      },
+      "stops": [
+        {
+          "seq": 1,
+          "request_id": "52405",
+          "arrive_at": "2026-08-17T09:28:00",
+          "start_at": "2026-08-17T10:00:00",
+          "end_at": "2026-08-17T11:10:00",
+          "wait_min": 32,
+          "travel_min": 28,
+          "travel_km": 3.08
+        },
+        {
+          "seq": 2,
+          "request_id": "76678",
+          "arrive_at": "2026-08-17T11:52:00",
+          "start_at": "2026-08-17T11:52:00",
+          "end_at": "2026-08-17T12:22:00",
+          "wait_min": 0,
+          "travel_min": 42,
+          "travel_km": 7.96
+        },
+        {
+          "seq": 3,
+          "request_id": "24076",
+          "arrive_at": "2026-08-17T12:52:00",
+          "start_at": "2026-08-17T12:52:00",
+          "end_at": "2026-08-17T13:22:00",
+          "wait_min": 0,
+          "travel_min": 30,
+          "travel_km": 4.49
+        },
+        {
+          "seq": 4,
+          "request_id": "48227",
+          "arrive_at": "2026-08-17T13:30:00",
+          "start_at": "2026-08-17T13:30:00",
+          "end_at": "2026-08-17T14:00:00",
+          "wait_min": 0,
+          "travel_min": 8,
+          "travel_km": 0.59
+        },
+        {
+          "seq": 5,
+          "request_id": "22634",
+          "arrive_at": "2026-08-17T14:12:00",
+          "start_at": "2026-08-17T14:12:00",
+          "end_at": "2026-08-17T14:32:00",
+          "wait_min": 0,
+          "travel_min": 12,
+          "travel_km": 0.89
+        },
+        {
+          "seq": 6,
+          "request_id": "41962",
+          "arrive_at": "2026-08-17T15:27:00",
+          "start_at": "2026-08-17T16:00:00",
+          "end_at": "2026-08-17T16:25:00",
+          "wait_min": 33,
+          "travel_min": 55,
+          "travel_km": 12.04
+        },
+        {
+          "seq": 7,
+          "request_id": "97886",
+          "arrive_at": "2026-08-17T16:51:00",
+          "start_at": "2026-08-17T16:51:00",
+          "end_at": "2026-08-17T17:16:00",
+          "wait_min": 0,
+          "travel_min": 26,
+          "travel_km": 2.26
+        },
+        {
+          "seq": 8,
+          "request_id": "92031",
+          "arrive_at": "2026-08-17T17:25:00",
+          "start_at": "2026-08-17T18:00:00",
+          "end_at": "2026-08-17T18:20:00",
+          "wait_min": 35,
+          "travel_min": 9,
+          "travel_km": 0.56
+        }
+      ],
+      "distance_km": 31.9,
+      "travel_min": 210,
+      "service_min": 250,
+      "wait_min": 100,
+      "finish_at": "2026-08-17T18:20:00",
+      "geometry": null
+    },
+    {
+      "engineer_id": 14,
+      "engineer_name": "Инженер 14",
+      "start": {
+        "lat": 55.702267,
+        "lon": 37.773852,
+        "at": "2026-08-17T09:00:00"
+      },
+      "stops": [
+        {
+          "seq": 1,
+          "request_id": "54964",
+          "arrive_at": "2026-08-17T09:30:00",
+          "start_at": "2026-08-17T10:00:00",
+          "end_at": "2026-08-17T10:25:00",
+          "wait_min": 30,
+          "travel_min": 30,
+          "travel_km": 3.82
+        },
+        {
+          "seq": 2,
+          "request_id": "69967",
+          "arrive_at": "2026-08-17T11:22:00",
+          "start_at": "2026-08-17T11:22:00",
+          "end_at": "2026-08-17T11:42:00",
+          "wait_min": 0,
+          "travel_min": 57,
+          "travel_km": 12.72
+        },
+        {
+          "seq": 3,
+          "request_id": "4893",
+          "arrive_at": "2026-08-17T12:13:00",
+          "start_at": "2026-08-17T12:13:00",
+          "end_at": "2026-08-17T12:43:00",
+          "wait_min": 0,
+          "travel_min": 31,
+          "travel_km": 4.85
+        },
+        {
+          "seq": 4,
+          "request_id": "60720",
+          "arrive_at": "2026-08-17T13:39:00",
+          "start_at": "2026-08-17T13:39:00",
+          "end_at": "2026-08-17T14:09:00",
+          "wait_min": 0,
+          "travel_min": 56,
+          "travel_km": 12.27
+        }
+      ],
+      "distance_km": 33.7,
+      "travel_min": 174,
+      "service_min": 105,
+      "wait_min": 30,
+      "finish_at": "2026-08-17T14:09:00",
+      "geometry": null
+    }
+  ],
+  "unassigned": [],
+  "metrics": {
+    "requests_total": 66,
+    "assigned": 66,
+    "unassigned": 0,
+    "engineers_used": 8,
+    "total_distance_km": 317.6,
+    "total_travel_min": 1799,
+    "total_wait_min": 389,
+    "window_violations": 0
+  },
+  "meta": {
+    "provider": "haversine",
+    "settings": {
+      "wait_weight": 0.1,
+      "restarts": 20
+    },
+    "runtime_ms": 630,
+    "generated_at": "2026-09-19T22:14:28"
+  }
+}

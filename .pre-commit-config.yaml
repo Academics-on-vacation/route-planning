@@ -1,11 +1,5 @@
 minimum_pre_commit_version: '4.2.0'
 repos:
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.12.10
-    hooks:
-      - id: ruff-check
-        args: [--fix]
-      - id: ruff-format
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
@@ -15,3 +9,17 @@ repos:
       - id: trailing-whitespace
       - id: check-merge-conflict
       - id: detect-private-key
+  - repo: local
+    hooks:
+      - id: frontend-format
+        name: frontend format
+        entry: make -C frontend format
+        language: system
+        files: ^frontend/(src/.*|index\.html|vite\.config\.js)$
+        pass_filenames: false
+      - id: backend-format
+        name: backend format
+        entry: make -C backend format
+        language: system
+        files: ^backend/.*\.py$
+        pass_filenames: false
