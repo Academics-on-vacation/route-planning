@@ -2,8 +2,8 @@ from sqlalchemy import (
     Double,
     String,
 )
-from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from app.orm.base import Base
 
 
@@ -22,4 +22,3 @@ class Region(Base):
     requests: Mapped[list["Request"]] = relationship(
         back_populates="region", cascade="all, delete-orphan"
     )
-

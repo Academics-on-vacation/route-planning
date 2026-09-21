@@ -55,8 +55,29 @@ CREATE TABLE request (
     fact_engineer_id INTEGER REFERENCES engineer(id) ON DELETE SET NULL,
     UNIQUE (region_id, external_id, window_start),
     CHECK (window_end > window_start)
+    is_active BOOLEAN NOT NULL DEFAULT TRUE
 );
 
 CREATE INDEX ix_request_planning ON request (region_id, window_start);
 CREATE INDEX ix_request_skill ON request (skill);
 CREATE INDEX ix_request_fact ON request (fact_engineer_id);
+
+
+CREATE TABLE IF NOT EXISTS route_cache (
+                                           id           SERIAL PRIMARY KEY,
+                                           transport    VARCHAR(16)      NOT NULL,
+    from_lat     DOUBLE PRECISION NOT NULL,
+    from_lon     DOUBLE PRECISION NOT NULL,
+    to_lat       DOUBLE PRECISION NOT NULL,
+    to_lon       DOUBLE PRECISION NOT NULL,
+    departure_at TIMESTAMP        NOT NULL,
+    minutes      SMALLINT         NOT NULL,
+    km           DOUBLE PRECISION NOT NULL,
+    payload      JSONB            NOT NULL,
+    created_at   TIMESTAMP        NOT NULL DEFAULT now(),
+    CONSTRAINT uq_route_cache_leg
+    UNIQUE (transport, from_lat, from_lon, to_lat, to_lon, departure_at)
+    );
+
+CREATE INDEX IF NOT EXISTS ix_route_cache_departure ON route_cache (departure_at);
+

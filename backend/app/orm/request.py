@@ -1,4 +1,4 @@
-from datetime import time, datetime
+from datetime import datetime
 
 from sqlalchemy import (
     CheckConstraint,
@@ -12,12 +12,12 @@ from sqlalchemy import (
     text,
 )
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.orm.base import Base
-from app.orm.transport import Transport
 from app.orm.required_transport import RequiredTransport
 from app.orm.skill import Skill
+
 
 class Request(Base):
     __tablename__ = "request"
@@ -70,4 +70,4 @@ class Request(Base):
     region: Mapped["Region"] = relationship(back_populates="requests")
     fact_engineer: Mapped["Engineer | None"] = relationship(back_populates="fact_requests")
 
-    is_active: Mapped[bool] = mapped_column(default=True)
+    is_active: Mapped[bool] = mapped_column(default=True, server_default=text("true"))

@@ -1,17 +1,18 @@
 import math
 
-
 from ..models.domain import Point, TransportType
+
 
 # ОЦЕНКА маршрута
 def estimate(a: Point, b: Point, transport: TransportType, depart: int) -> tuple[int, float]:
-
     p1, p2 = math.radians(a.latitude), math.radians(b.latitude)
     h = (
         math.sin((p2 - p1) / 2) ** 2
         + math.cos(p1) * math.cos(p2) * math.sin(math.radians(b.longitude - a.longitude) / 2) ** 2
     )
-    straight = 2 * 6371.0088 * math.asin(math.sqrt(h)) # расстрояние по прямой (по длине дуги на сфере)
+    straight = (
+        2 * 6371.0088 * math.asin(math.sqrt(h))
+    )  # расстрояние по прямой (по длине дуги на сфере)
 
     if straight < 0.02:
         return 0, 0.0

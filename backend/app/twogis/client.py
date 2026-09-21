@@ -12,8 +12,18 @@ ROUTING_URL = "https://routing.api.2gis.com/routing/7.0.0/global"
 TRANSIT_URL = "https://routing.api.2gis.com/public_transport/2.0"
 
 TRANSIT_MODES = [
-    "pedestrian", "metro", "light_metro", "premetro", "monorail",
-    "mcc", "mcd", "suburban_train", "tram", "bus", "trolleybus", "shuttle_bus",
+    "pedestrian",
+    "metro",
+    "light_metro",
+    "premetro",
+    "monorail",
+    "mcc",
+    "mcd",
+    "suburban_train",
+    "tram",
+    "bus",
+    "trolleybus",
+    "shuttle_bus",
 ]
 
 

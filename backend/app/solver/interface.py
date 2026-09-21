@@ -1,4 +1,5 @@
-from ..models.domain import Engeneer, Ticket, Route
+from ..models.domain import Engeneer, Route, Ticket
+
 
 class Solver:
     def __init__(self):

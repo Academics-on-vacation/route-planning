@@ -1,13 +1,13 @@
+from datetime import date
+
+from fastapi import Body, Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
-from app.db import get_session
-from datetime import date
-from fastapi import FastAPI, APIRouter, Body, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.helpers import repository, service
-from app.db import get_session
-from app.models.domain import Region
 
+from app.db import get_session
+from app.helpers import repository, service
+from app.models.domain import Region
 
 app = FastAPI(title="Route Planning API", version="0.1.0")
 app.add_middleware(
@@ -16,7 +16,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 
 @app.get("/api/health")
@@ -31,13 +30,12 @@ async def database_health() -> dict[str, str]:
         return {"status": "ok"}
     raise RuntimeError("database session was not created")
 
+
 async def _region(session: AsyncSession, region_id: int) -> Region:
     region = await service.load_region(session, region_id)
     if region is None:
         raise HTTPException(404, f"Региона {region_id} нет")
     return region
-
-
 
 
 @app.get("/api/regions")

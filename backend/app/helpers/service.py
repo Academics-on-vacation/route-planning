@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.concurrency import run_in_threadpool
 
 from app.helpers import repository
+from app.helpers.cache import LegCache
 from app.models.domain import Engeneer, Region, Ticket
 from app.solver.greedy import GreedySolver
 
@@ -41,9 +42,15 @@ async def build_plan(
     if not engineers:
         return _empty(region.id, work_date, "в регионе нет активных исполнителей")
 
-    solver = GreedySolver(work_date=datetime.combine(work_date, time.min), use_api=use_api)
+    cache = LegCache(await repository.load_leg_cache(session, work_date) if use_api else ())
+
+    solver = GreedySolver(
+        work_date=datetime.combine(work_date, time.min), use_api=use_api, cache=cache
+    )
 
     plan = await run_in_threadpool(solver.solve, tickets, engineers)
+
+    plan.meta["cache_saved"] = await repository.save_leg_cache(session, cache.pending)
 
     return plan.to_json(region.id, work_date)
 

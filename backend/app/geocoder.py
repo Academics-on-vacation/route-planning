@@ -1,12 +1,10 @@
 import asyncio
-import logging
 
 from sqlalchemy import select
 from yandex_geocoder import Client, NothingFound, YandexGeocoderException
 
 from app.config import settings
 from app.db import session_factory
-
 from app.orm import Request
 
 
@@ -23,7 +21,7 @@ async def geocode_all_requests() -> None:
             try:
                 longitude, latitude = client.coordinates(request.address)
             except NothingFound:
-                print(f"Координаты не найдены: заявка #{ request.id}, адрес {request.address}")
+                print(f"Координаты не найдены: заявка #{request.id}, адрес {request.address}")
                 continue
             except YandexGeocoderException as error:
                 print(f"Ошибка геокодирования заявки #{request.id}: {error}")

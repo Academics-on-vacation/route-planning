@@ -2,20 +2,19 @@ from datetime import time
 
 from sqlalchemy import (
     CheckConstraint,
-    Double,
     Enum,
     ForeignKey,
     Index,
-    SmallInteger,
     String,
     UniqueConstraint,
     text,
 )
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.orm.base import Base
 from app.orm.transport import Transport
+
 
 class Engineer(Base):
     __tablename__ = "engineer"

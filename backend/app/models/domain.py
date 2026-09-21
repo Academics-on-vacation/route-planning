@@ -1,6 +1,7 @@
 from datetime import date, datetime, time, timedelta
 from enum import Enum
 
+
 def minutes_of(value: datetime | time) -> int:
     """Время суток -> минуты от полуночи."""
     return value.hour * 60 + value.minute
@@ -20,7 +21,6 @@ def _value(x):
     return x.value if hasattr(x, "value") else x
 
 
-
 class Point:
     def __init__(self, latitude: float, longitude: float):
         self.latitude = latitude
@@ -33,7 +33,6 @@ class Point:
 
     def __repr__(self):
         return f"{self.latitude}, {self.longitude}"
-
 
 
 class SkillType(str, Enum):
@@ -85,7 +84,6 @@ class Region:
 
     def __repr__(self):
         return f"{self.id} {self.title}"
-
 
 
 class Ticket:
@@ -151,8 +149,6 @@ class Ticket:
         return f"{self.id} {self.skill.value} {self.work_start}-{self.work_finish}"
 
 
-
-
 class Engeneer:
     def __init__(
         self,
@@ -197,8 +193,6 @@ class Engeneer:
 
     def __repr__(self):
         return f"{self.id} {self.name} {self.transport.value}"
-
-
 
 
 class Stop:
@@ -286,7 +280,7 @@ class Route:
 
 
 class Unassigned:
-    """Заявка без исполнителя и причина. """
+    """Заявка без исполнителя и причина."""
 
     def __init__(self, ticket: Ticket, reason: str, reason_text: str):
         self.ticket = ticket
@@ -302,7 +296,6 @@ class Unassigned:
 
     def __repr__(self):
         return f"{self.ticket.id}: {self.reason_text}"
-
 
 
 class Plan:
