@@ -1,0 +1,57 @@
+from __future__ import annotations
+
+from collections import Counter
+from datetime import date, datetime, time, timedelta
+
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.orm.engineer import Engineer
+from app.orm.region import Region
+from app.orm.request import Request
+
+
+async def get_region(session: AsyncSession, region_id: int) -> Region | None:
+    return await session.get(Region, region_id)
+
+
+async def list_regions(session: AsyncSession) -> list[Region]:
+    return list(await session.scalars(select(Region).order_by(Region.id)))
+
+
+async def first_work_date(session: AsyncSession, region_id: int) -> date | None:
+    found = await session.scalar(
+        select(func.min(Request.window_start)).where(Request.region_id == region_id)
+    )
+    return found.date() if found else None
+
+
+async def list_requests(session: AsyncSession, region_id: int, work_date: date) -> list[Request]:
+    rows = await session.scalars(
+        select(Request)
+        .where(
+            Request.region_id == region_id,
+            Request.is_active.is_(True),
+            Request.window_start >= datetime.combine(work_date, time.min),
+            Request.window_start < datetime.combine(work_date + timedelta(days=1), time.min),
+        )
+        .order_by(Request.window_start)
+    )
+    return list(rows)
+
+
+async def list_engineers(session: AsyncSession, region_id: int) -> list[Engineer]:
+    rows = await session.scalars(
+        select(Engineer)
+        .where(Engineer.region_id == region_id, Engineer.is_active.is_(True))
+        .order_by(Engineer.id)
+    )
+    return list(rows)
+
+
+def public_ids(rows: list[Request]) -> dict[int, str]:
+    seen = Counter(r.external_id for r in rows)
+    return {
+        r.id: (r.external_id if seen[r.external_id] == 1 else f"{r.external_id}-{r.id}")
+        for r in rows
+    }

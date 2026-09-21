@@ -1,0 +1,59 @@
+from datetime import date, datetime, time
+
+from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.concurrency import run_in_threadpool
+
+from app.helpers import repository
+from app.models.domain import Engeneer, Region, Ticket
+from app.solver.greedy import GreedySolver
+
+
+async def load_region(session: AsyncSession, region_id: int) -> Region | None:
+    row = await repository.get_region(session, region_id)
+    return Region.from_row(row) if row else None
+
+
+async def load_tickets(session: AsyncSession, region_id: int, work_date: date) -> list[Ticket]:
+    rows = await repository.list_requests(session, region_id, work_date)
+    ids = repository.public_ids(rows)
+    return [Ticket.from_row(r, ids[r.id]) for r in rows]
+
+
+async def load_engineers(session: AsyncSession, region_id: int, office) -> list[Engeneer]:
+    rows = await repository.list_engineers(session, region_id)
+    return [Engeneer.from_row(r, office) for r in rows]
+
+
+async def build_plan(
+    session: AsyncSession,
+    region: Region,
+    work_date: date | None = None,
+    use_api: bool = True,
+) -> dict:
+    work_date = work_date or await repository.first_work_date(session, region.id)
+    if work_date is None:
+        return _empty(region.id, None, "в базе нет заявок для этого региона")
+
+    tickets = await load_tickets(session, region.id, work_date)
+    engineers = await load_engineers(session, region.id, region.office)
+    if not tickets:
+        return _empty(region.id, work_date, "на эту дату заявок нет")
+    if not engineers:
+        return _empty(region.id, work_date, "в регионе нет активных исполнителей")
+
+    solver = GreedySolver(work_date=datetime.combine(work_date, time.min), use_api=use_api)
+
+    plan = await run_in_threadpool(solver.solve, tickets, engineers)
+
+    return plan.to_json(region.id, work_date)
+
+
+def _empty(region_id: int, work_date: date | None, note: str) -> dict:
+    return {
+        "region_id": region_id,
+        "work_date": work_date.isoformat() if work_date else None,
+        "routes": [],
+        "unassigned": [],
+        "metrics": {},
+        "meta": {"note": note},
+    }
