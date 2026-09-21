@@ -90,12 +90,54 @@
 
 /* Офис — квадрат, чтобы не путался с круглыми точками заявок. */
 .map-office {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #ffcc00;
+  border: 2px solid #14161a;
+  color: #14161a;
+  box-shadow: 0 2px 7px rgb(0 0 0 / 0.35);
+}
+
+.map-office svg {
   width: 16px;
   height: 16px;
-  background: #ffcc00;
-  border: 2px solid #000;
-  transform: rotate(45deg);
-  box-shadow: 0 1px 4px rgb(0 0 0 / 0.4);
+  display: block;
+}
+
+.map-office::before {
+  content: "";
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
+  border: 2px solid #ffcc00;
+  animation: office-halo 2.6s ease-out infinite;
+}
+
+@keyframes office-halo {
+  0% {
+    transform: scale(0.75);
+    opacity: 0.9;
+  }
+  70% {
+    transform: scale(1.55);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.55);
+    opacity: 0;
+  }
+}
+
+/* На проекторе и у тех, кто просил меньше движения, кольцо замирает. */
+@media (prefers-reduced-motion: reduce) {
+  .map-office::before {
+    animation: none;
+    opacity: 0.35;
+  }
 }
 
 .leaflet-container {

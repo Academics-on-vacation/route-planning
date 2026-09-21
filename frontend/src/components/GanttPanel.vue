@@ -1,7 +1,18 @@
 <script setup>
 import { computed } from "vue";
 
-import { colorOfEngineer, routes, state } from "../store.js";
+import {
+  colorOfEngineer,
+  focusEngineer,
+  hover,
+  isActive,
+  isDimmed,
+  isFocused,
+  isSelected,
+  routes,
+  select,
+  state,
+} from "../store.js";
 import { hhmm, toMinutes } from "../time.js";
 
 const bounds = computed(() => {
@@ -50,7 +61,10 @@ function travel(stop) {
   };
 }
 
-const color = (engineerId) => colorOfEngineer.value[String(engineerId)];
+const color = (engineerId) => colorOfEngineer.value[String(engineerId)]
+
+const hatch = (engineerId) =>
+  `repeating-linear-gradient(135deg, ${color(engineerId)} 0 2px, transparent 2px 5px)`
 </script>
 
 <template>
@@ -79,10 +93,15 @@ const color = (engineerId) => colorOfEngineer.value[String(engineerId)];
       <div
         v-for="route in routes"
         :key="route.engineer_id"
-        class="flex items-stretch pr-8 border-b border-hair last:border-b-0 hover:bg-panel-2"
+        class="flex items-stretch pr-8 border-b border-hair last:border-b-0
+               hover:bg-panel-2 transition-opacity"
+        :class="isDimmed(route.engineer_id) ? 'opacity-35' : ''"
       >
         <div
-          class="w-[140px] flex-none flex items-center gap-1.5 px-2 border-r border-hair text-[11.5px] truncate"
+          class="w-[140px] flex-none flex items-center gap-1.5 px-2 border-r border-hair
+                 text-[11.5px] truncate cursor-pointer hover:bg-hair/40 transition-colors"
+          :class="isFocused(route.engineer_id) ? 'bg-brand/15' : ''"
+          @click="focusEngineer(route.engineer_id)"
         >
           <i
             class="w-1.5 h-1.5 rounded-full shrink-0"
@@ -102,27 +121,36 @@ const color = (engineerId) => colorOfEngineer.value[String(engineerId)];
           <template v-for="stop in route.stops" :key="stop.request_id">
             <span
               v-if="travel(stop)"
-              class="absolute top-3 h-0.5 rounded-full"
+              class="absolute top-1/2 -translate-y-1/2 h-0.5 rounded-full opacity-55"
               :style="{ ...travel(stop), background: color(route.engineer_id) }"
             />
             <span
               v-if="band(stop.arrive_at, stop.start_at)"
-              class="absolute top-2 h-2.5 opacity-25"
+              class="absolute top-2.5 h-4 rounded-[2px] opacity-70"
               :style="{
                 ...band(stop.arrive_at, stop.start_at),
-                background: color(route.engineer_id),
-                opacity: 0.25,
+                background: hatch(route.engineer_id),
               }"
               :title="`Простой ${stop.wait_min} мин`"
             />
             <span
               v-if="band(stop.start_at, stop.end_at)"
-              class="absolute top-[3px] h-5 rounded-[2px] overflow-hidden"
+              class="absolute top-1.5 h-6 rounded-[4px] ring-2 ring-panel cursor-pointer"
+              :class="
+                isSelected(stop.request_id)
+                  ? 'outline-2 outline-ink z-10'
+                  : isActive(stop.request_id)
+                    ? 'outline-2 outline-ink/40 z-10'
+                    : ''
+              "
               :style="{
                 ...band(stop.start_at, stop.end_at),
                 background: color(route.engineer_id),
               }"
               :title="`${stop.request_id}: ${hhmm(stop.start_at)}–${hhmm(stop.end_at)}`"
+              @click="select(stop.request_id)"
+              @mouseenter="hover(stop.request_id)"
+              @mouseleave="hover(null)"
             />
           </template>
         </div>

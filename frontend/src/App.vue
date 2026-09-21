@@ -1,11 +1,12 @@
 <script setup>
-import { computed, onMounted } from "vue";
+import { computed, onBeforeUnmount, onMounted } from "vue";
 
 import GanttPanel from "./components/GanttPanel.vue";
 import ListPanel from "./components/ListPanel.vue";
 import MapView from "./components/MapView.vue";
 import {
   SKILLS,
+  clearSelection,
   loadRegion,
   loadRegions,
   metrics,
@@ -17,6 +18,12 @@ import {
 import { hhmm, toMinutes } from "./time.js";
 
 onMounted(loadRegions);
+
+const onKey = (e) => {
+  if (e.key === "Escape") clearSelection();
+};
+onMounted(() => window.addEventListener("keydown", onKey));
+onBeforeUnmount(() => window.removeEventListener("keydown", onKey));
 
 const request = computed(() =>
   state.selected == null
@@ -153,6 +160,14 @@ const slack = computed(() => {
             <span class="text-[11.5px] text-muted truncate">
               {{ request.address ?? request.district ?? "" }}
             </span>
+            <button
+              class="ml-auto shrink-0 text-muted hover:text-ink text-[16px] leading-none
+                     px-1 cursor-pointer"
+              title="Снять выделение"
+              @click="clearSelection()"
+            >
+              ×
+            </button>
           </div>
 
           <dl class="grid grid-cols-2 gap-x-3 gap-y-1 mt-2 text-[11.5px]">

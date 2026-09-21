@@ -86,6 +86,48 @@ export const engineerOf = (requestId) =>
 
 const same = (a, b) => a != null && b != null && String(a) === String(b);
 
+/** Клик по заявке. Повторный клик по той же снимает выделение. */
+export function select(id) {
+  state.selected = same(state.selected, id) ? null : id;
+}
+
+export function hover(id) {
+  state.hovered = id;
+}
+
+/** Подсветить весь маршрут инженера; повторный клик снимает. */
+export function focusEngineer(id) {
+  state.focused = same(state.focused, id) ? null : id;
+}
+
+export function clearSelection() {
+  state.selected = null;
+  state.hovered = null;
+  state.focused = null;
+}
+
+export const isSelected = (id) => same(state.selected, id);
+export const isHovered = (id) => same(state.hovered, id);
+
+/** Заявка под вниманием: выбрана или под курсором. */
+export const isActive = (id) => isSelected(id) || isHovered(id);
+
+/**
+ * Глушим только когда выделен маршрут ДРУГОГО инженера. Выбор одной
+ * заявки другие не глушит: иначе при клике карта наполовину гаснет,
+ * а смотрят как раз на соседние маршруты — кому её передать.
+ */
+export const isDimmed = (engineerId) =>
+  state.focused != null && !same(state.focused, engineerId);
+
+export const isFocused = (engineerId) => same(state.focused, engineerId);
+
+/** Цвет заявки = цвет её исполнителя. Не назначенная — красная. */
+export const colorOfRequest = (requestId) => {
+  const eng = engineerOf(requestId);
+  return eng == null ? "#99271f" : colorOfEngineer.value[key(eng)];
+};
+
 const indexById = (rows) => {
   const map = {};
   for (const row of rows) map[key(row.id)] = row;

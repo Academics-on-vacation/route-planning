@@ -5,6 +5,11 @@ import "leaflet/dist/leaflet.css";
 
 import {
   colorOfEngineer,
+  focusEngineer,
+  hover,
+  isActive,
+  isDimmed,
+  isSelected,
   plan,
   routes,
   state,
@@ -22,13 +27,15 @@ const ghosts = new Map(); // requestId -> circleMarker не назначенно
 const lines = new Map(); // engineerId -> polyline
 
 const UNASSIGNED = "#99271f";
+const INK = "#14161a";
 
 onMounted(() => {
   map = L.map(el.value, { preferCanvas: true }).setView([55.7, 37.7], 10);
   // L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
   layer = L.layerGroup().addTo(map);
-
+  // Клик по пустому месту снимает выделение — привычный жест.
+  map.on("click", () => select(null));
   redraw();
 });
 
@@ -40,12 +47,36 @@ onBeforeUnmount(() => {
 watch([plan, () => state.regionId], redraw);
 watch(() => [state.selected, state.hovered, state.focused], restyle);
 
+watch(
+  () => state.selected,
+  (id) => {
+    if (id == null || !map) return;
+    const marker = markers.get(String(id)) ?? ghosts.get(String(id));
+    if (!marker) return;
+    const latlng = markers.has(String(id))
+      ? marker.marker.getLatLng()
+      : marker.getLatLng();
+    if (!map.getBounds().pad(-0.15).contains(latlng)) map.panTo(latlng);
+  },
+);
+
+
 function officeIcon() {
   return L.divIcon({
     className: "",
-    iconSize: [14, 14],
-    iconAnchor: [7, 7],
-    html: '<div class="map-office"></div>',
+    iconSize: [30, 30],
+    iconAnchor: [15, 15],
+    html: `
+      <div class="map-office">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M3 11.2 12 4l9 7.2" fill="none" stroke="currentColor"
+                stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M5.5 10.6V19h13v-8.4" fill="none" stroke="currentColor"
+                stroke-width="2.1" stroke-linejoin="round"/>
+          <path d="M10 19v-4.2h4V19" fill="none" stroke="currentColor"
+                stroke-width="2.1" stroke-linejoin="round"/>
+        </svg>
+      </div>`,
   });
 }
 
@@ -55,7 +86,7 @@ function pin(color, size, ring) {
     iconSize: [size, size],
     iconAnchor: [size / 2, size / 2],
     html: `<div class="map-pin" style="width:${size}px;height:${size}px;background:${color}${
-      ring ? `;box-shadow:0 0 0 3px ${ring}` : ""
+      ring ? `;box-shadow:0 0 0 3px ${ring},0 1px 3px rgba(0,0,0,.4)` : ""
     }"></div>`,
   });
 }
@@ -72,8 +103,14 @@ function redraw() {
 
   console.log(region);
   if (region) {
-    L.marker([region.office_lat, region.office_lon], { icon: officeIcon() })
-      .bindPopup(`Офис: ${region.office_address ?? ""}`)
+    L.marker([region.office_lat, region.office_lon], {
+      icon: officeIcon(),
+      zIndexOffset: 2000, // офис всегда поверх точек заявок
+    })
+      .bindPopup(
+        `<b>Офис региона «${region.title}»</b><br>${region.office_address ?? ""}<br>
+         <span style="color:#6e6e76">отсюда инженеры начинают день</span>`,
+      )
       .addTo(layer);
     bounds.push([region.office_lat, region.office_lon]);
   }
@@ -89,14 +126,16 @@ function redraw() {
       path.push([req.lat, req.lon]);
 
       const marker = L.marker([req.lat, req.lon], { icon: pin(color, 12) })
-        // .bindPopup(
-        //   `${req.id}<br>${req.district ?? ''}<br>окно ${hhmm(req.window_start)}–${hhmm(
-        //     req.window_end,
-        //   )}, приезд ${hhmm(stop.start_at)}<br>${route.engineer_name}`,
-        // )
-        // .on('click', () => select(req.id))
-        // .on('mouseover', () => hover(req.id))
-        // .on('mouseout', () => hover(null))
+        .bindPopup(
+          `<b>${req.id}</b><br>${req.district ?? ""}<br>окно ${hhmm(
+            req.window_start,
+          )}–${hhmm(req.window_end)}, приезд ${hhmm(stop.start_at)}<br>${
+            route.engineer_name
+          }`,
+        )
+        .on("click", () => select(req.id))
+        .on("mouseover", () => hover(req.id))
+        .on("mouseout", () => hover(null))
         .addTo(layer);
 
       markers.set(String(req.id), { marker, color });
@@ -105,11 +144,13 @@ function redraw() {
 
     lines.set(
       String(route.engineer_id),
-      L.polyline(route.geometry ?? path, {
-        color,
-        weight: 3,
-        opacity: 0.75,
-      }).addTo(layer),
+      L.polyline(route.geometry ?? path, { color, weight: 3, opacity: 0.75 })
+        // Клик по линии = клик по имени инженера в списке.
+        .on("click", (e) => {
+          L.DomEvent.stop(e);
+          focusEngineer(route.engineer_id);
+        })
+        .addTo(layer),
     );
   }
 
@@ -125,8 +166,10 @@ function redraw() {
       fillColor: "#fff",
       fillOpacity: 1,
     })
-      .bindPopup(`${req.id} — не назначена<br>${u.reason_text ?? ""}`)
-      // .on('click', () => select(req.id))
+      .bindPopup(`<b>${req.id} — не назначена</b><br>${u.reason_text ?? ""}`)
+      .on("click", () => select(req.id))
+      .on("mouseover", () => hover(req.id))
+      .on("mouseout", () => hover(null))
       .addTo(layer);
     ghosts.set(String(req.id), ghost);
     bounds.push([req.lat, req.lon]);
@@ -138,25 +181,29 @@ function redraw() {
 
 function restyle() {
   for (const [id, { marker, color }] of markers) {
-    const dim = false;
-    const sel = false;
+    const dim = isDimmed(engineerOf(id));
+    const sel = isSelected(id);
+    const act = isActive(id);
     marker.setIcon(
-      pin(color, sel ? 18 : false ? 14 : dim ? 8 : 12, sel ? "#000" : null),
+      pin(color, sel ? 18 : act ? 14 : dim ? 8 : 12, sel ? INK : null),
     );
     marker.setOpacity(dim ? 0.35 : 1);
-    marker.setZIndexOffset(sel ? 1000 : 0);
+    marker.setZIndexOffset(sel ? 1000 : act ? 500 : 0);
   }
   // Не назначенные — отдельный реестр: у circleMarker нет setIcon.
   for (const [id, ghost] of ghosts) {
-    const sel = false;
+    const sel = isSelected(id);
+    const act = isActive(id);
     ghost.setStyle({
-      radius: sel ? 11 : 7,
+      radius: sel ? 11 : act ? 9 : 7,
       weight: sel ? 3.5 : 2,
+      color: sel ? INK : UNASSIGNED,
       fillColor: sel ? UNASSIGNED : "#fff",
     });
+    if (sel) ghost.bringToFront();
   }
   for (const [engineerId, line] of lines) {
-    const dim = false;
+    const dim = isDimmed(engineerId);
     line.setStyle({ weight: dim ? 1.5 : 3, opacity: dim ? 0.2 : 0.75 });
   }
 }
