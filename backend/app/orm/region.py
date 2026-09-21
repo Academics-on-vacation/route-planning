@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING
+
 from sqlalchemy import (
     Double,
     String,
@@ -5,6 +7,10 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.orm.base import Base
+
+if TYPE_CHECKING:
+    from app.orm.engineer import Engineer
+    from app.orm.request import Request
 
 
 class Region(Base):

@@ -1,4 +1,5 @@
 from datetime import time
+from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     CheckConstraint,
@@ -14,6 +15,10 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.orm.base import Base
 from app.orm.transport import Transport
+
+if TYPE_CHECKING:
+    from app.orm.region import Region
+    from app.orm.request import Request
 
 
 class Engineer(Base):
