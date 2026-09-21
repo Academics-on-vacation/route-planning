@@ -23,6 +23,7 @@ if TYPE_CHECKING:
     from app.orm.engineer import Engineer
     from app.orm.region import Region
 
+
 class Request(Base):
     __tablename__ = "request"
     __table_args__ = (

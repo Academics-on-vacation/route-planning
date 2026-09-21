@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     db_user: str = Field(
         default="route_planning", validation_alias=AliasChoices("DB_USER", "POSTGRES_USER")
     )
-    db_password: str = Field(validation_alias=AliasChoices("POSTGRES_PASSWORD"))
+    db_password: str = Field(validation_alias=AliasChoices("DB_PASSWORD", "POSTGRES_PASSWORD"))
 
     yandex_geocoder_api_key: str | None = Field(
         default=None, validation_alias="YANDEX_GEOCODER_API_KEY"
