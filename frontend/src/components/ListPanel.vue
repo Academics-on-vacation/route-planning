@@ -1,7 +1,22 @@
 <script setup>
 import { watch } from "vue";
 
-import { routes, state, colorOfEngineer, unassigned, isDimmed, isActive, isFocused, isHovered, isSelected, select, hover } from "../store.js";
+import TransportChip from "./TransportChip.vue";
+import {
+  routes,
+  state,
+  colorOfEngineer,
+  focusEngineer,
+  hover,
+  isDimmed,
+  isActive,
+  isFocused,
+  isHovered,
+  isSelected,
+  select,
+  transportOf,
+  unassigned,
+} from "../store.js";
 import { hhmm } from "../time.js";
 
 const nodes = new Map();
@@ -31,24 +46,29 @@ const districtOf = (id) => state.requests[String(id)]?.district ?? "";
         class="transition-opacity"
         :class="isDimmed(route.engineer_id) ? 'opacity-40' : ''"
       >
-        <!-- Клик по инженеру подсвечивает весь его маршрут и глушит
-             остальные — на карте и на Ганте тоже. -->
         <h3
-          class="sticky top-0 z-1 px-2.5 py-1.5 bg-panel-2 border-y border-hair
-                 text-[12.5px] font-semibold cursor-pointer hover:bg-hair/50
-                 transition-colors"
+          class="sticky top-0 z-1 flex items-center gap-1.5 px-2.5 py-1.5 bg-panel-2 border-y border-hair text-[12.5px] font-semibold cursor-pointer hover:bg-hair/50 transition-colors"
           :class="isFocused(route.engineer_id) ? 'bg-brand/15' : ''"
           @click="focusEngineer(route.engineer_id)"
         >
           <i
-            class="inline-block w-2.5 h-2.5 rounded-full mr-1.5"
+            class="w-2.5 h-2.5 rounded-full shrink-0"
             :style="{ background: colorOfEngineer[String(route.engineer_id)] }"
           />
-          {{ route.engineer_name }}
-          <small class="num block text-[10.5px] font-normal text-muted">
-            {{ route.stops.length }} зв, {{ route.distance_km?.toFixed(0) }} км,
-            до {{ hhmm(route.finish_at) }}
-          </small>
+          <span class="min-w-0 truncate">
+            {{ route.engineer_name }}
+            <small class="num block text-[10.5px] font-normal text-muted">
+              {{ route.stops.length }} зв,
+              {{ route.distance_km?.toFixed(0) }} км, до
+              {{ hhmm(route.finish_at) }}
+            </small>
+          </span>
+          <!-- Транспорт справа, а не в строке с километрами: иначе
+               при узкой панели строка переносится и заголовок прыгает. -->
+          <TransportChip
+            class="ml-auto"
+            :kind="transportOf(route.engineer_id)"
+          />
         </h3>
 
         <ol
@@ -58,8 +78,7 @@ const districtOf = (id) => state.requests[String(id)]?.district ?? "";
             v-for="stop in route.stops"
             :key="stop.request_id"
             :ref="(el) => registerNode(stop.request_id, el)"
-            class="py-0.5 pr-2.5 -ml-2 pl-2 border-l-2 cursor-pointer
-                   transition-colors"
+            class="py-0.5 pr-2.5 -ml-2 pl-2 border-l-2 cursor-pointer transition-colors"
             :class="
               isSelected(stop.request_id)
                 ? 'border-ink bg-brand/25'
@@ -74,11 +93,18 @@ const districtOf = (id) => state.requests[String(id)]?.district ?? "";
             <span class="num text-[12px] text-muted mr-1.5">
               {{ hhmm(stop.start_at) }}
             </span>
-            <span class="num text-[12.5px] font-medium">{{ stop.request_id }}</span>
-            <span class="ml-1 text-muted">{{ districtOf(stop.request_id) }}</span>
+            <span class="num text-[12.5px] font-medium">{{
+              stop.request_id
+            }}</span>
+            <span class="ml-1 text-muted">{{
+              districtOf(stop.request_id)
+            }}</span>
             <!-- Простой — единственное, что подсвечено в строке: это
                  то, что диспетчер ищет глазами. -->
-            <span v-if="stop.wait_min > 15" class="num text-[11px] text-serious">
+            <span
+              v-if="stop.wait_min > 15"
+              class="num text-[11px] text-serious"
+            >
               · простой {{ stop.wait_min }} мин
             </span>
           </li>
@@ -87,12 +113,10 @@ const districtOf = (id) => state.requests[String(id)]?.district ?? "";
 
       <section v-if="unassigned.length">
         <h3
-          class="sticky top-0 z-1 flex items-center gap-2 px-3 py-2
-                 bg-crit/8 border-y border-crit/25"
+          class="sticky top-0 z-1 flex items-center gap-2 px-3 py-2 bg-crit/8 border-y border-crit/25"
         >
           <span
-            class="w-4 h-4 rounded-full bg-crit text-white text-[11px] font-bold
-                   grid place-items-center shrink-0"
+            class="w-4 h-4 rounded-full bg-crit text-white text-[11px] font-bold grid place-items-center shrink-0"
             aria-hidden="true"
           >
             !
@@ -116,7 +140,9 @@ const districtOf = (id) => state.requests[String(id)]?.district ?? "";
             @mouseenter="hover(u.request_id)"
             @mouseleave="hover(null)"
           >
-            <span class="num text-[12.5px] font-medium">{{ u.request_id }}</span>
+            <span class="num text-[12.5px] font-medium">{{
+              u.request_id
+            }}</span>
             <span class="block text-[11.5px] text-crit">
               {{ u.reason_text ?? u.reason }}
             </span>

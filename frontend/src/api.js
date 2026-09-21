@@ -20,5 +20,11 @@ export const api = {
   regions: () => req("/regions"),
   requests: (id) => req(`/regions/${id}/requests`),
   engineers: (id) => req(`/regions/${id}/engineers`),
-  plan: (id, options = {}) => req("/plan"),
+  plan: (id, options = {}) => {
+    console.log("here!!!", id, options);
+    return req("/plan", {
+      method: "POST",
+      body: JSON.stringify({ region_id: id, options }),
+    });
+  },
 };

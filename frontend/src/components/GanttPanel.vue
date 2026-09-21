@@ -61,10 +61,10 @@ function travel(stop) {
   };
 }
 
-const color = (engineerId) => colorOfEngineer.value[String(engineerId)]
+const color = (engineerId) => colorOfEngineer.value[String(engineerId)];
 
 const hatch = (engineerId) =>
-  `repeating-linear-gradient(135deg, ${color(engineerId)} 0 2px, transparent 2px 5px)`
+  `repeating-linear-gradient(135deg, ${color(engineerId)} 0 2px, transparent 2px 5px)`;
 </script>
 
 <template>
@@ -93,13 +93,11 @@ const hatch = (engineerId) =>
       <div
         v-for="route in routes"
         :key="route.engineer_id"
-        class="flex items-stretch pr-8 border-b border-hair last:border-b-0
-               hover:bg-panel-2 transition-opacity"
+        class="flex items-stretch pr-8 border-b border-hair last:border-b-0 hover:bg-panel-2 transition-opacity"
         :class="isDimmed(route.engineer_id) ? 'opacity-35' : ''"
       >
         <div
-          class="w-[140px] flex-none flex items-center gap-1.5 px-2 border-r border-hair
-                 text-[11.5px] truncate cursor-pointer hover:bg-hair/40 transition-colors"
+          class="w-[140px] flex-none flex items-center gap-1.5 px-2 border-r border-hair text-[11.5px] truncate cursor-pointer hover:bg-hair/40 transition-colors"
           :class="isFocused(route.engineer_id) ? 'bg-brand/15' : ''"
           @click="focusEngineer(route.engineer_id)"
         >

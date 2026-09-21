@@ -29,6 +29,7 @@ export const state = reactive({
   regions: [],
   regionId: null,
   requests: {},
+  pendingRegionId: null,
   engineers: {},
   selected: null,
   hovered: null,
@@ -78,6 +79,11 @@ export const unassignedIndex = computed(() => {
 });
 
 export const metrics = computed(() => plan.value?.metrics ?? null);
+
+export const transportOf = (engineerId) =>
+  engineerId == null
+    ? null
+    : (state.engineers[key(engineerId)]?.transport ?? null);
 
 export const engineerOf = (requestId) =>
   requestId == null
@@ -134,46 +140,69 @@ const indexById = (rows) => {
   return map;
 };
 
-export async function loadRegions() {
-  try {
-    state.regions = await api.regions();
-    if (state.regions.length) await loadRegion(state.regions[0].id);
-  } catch (e) {
-    state.error = String(e.message ?? e);
-  }
+let regionsPromise = null;
+
+export function ensureRegions() {
+  regionsPromise ??= api
+    .regions()
+    .then((rows) => (state.regions = rows))
+    .catch((e) => {
+      state.error = String(e.message ?? e);
+      regionsPromise = null; // дадим следующему переходу попробовать снова
+      return [];
+    });
+  return regionsPromise;
 }
 
+let token = 0;
+
 export async function loadRegion(id) {
+  const mine = ++token;
+  state.pendingRegionId = id;
   state.loading = true;
   state.error = null;
+  clearSelection();
+  plan.value = null;
+
   try {
     const [reqs, engs] = await Promise.all([
       api.requests(id),
       api.engineers(id),
     ]);
+    if (mine !== token) return; // нас обогнали, этот ответ уже не нужен
     state.regionId = id;
     state.requests = indexById(reqs);
     state.engineers = indexById(engs);
-    // Выделение снимаем: заявки из другого региона здесь нет.
-    state.selected = null;
-    state.hovered = null;
-    state.focused = null;
-    plan.value = await api.plan(id);
+
+    const fresh = await api.plan(id);
+    if (mine !== token) return;
+    plan.value = fresh;
   } catch (e) {
+    if (mine !== token) return;
     state.error = String(e.message ?? e);
   } finally {
-    state.loading = false;
+    if (mine === token) {
+      state.loading = false;
+      state.pendingRegionId = null;
+    }
   }
 }
 
+/** Пересчитать план текущего региона. Тот же счётчик: если во время
+ *  пересчёта переключили регион, старый ответ выбрасываем. */
 export async function rebuild(options = {}) {
+  const mine = ++token;
+  const id = state.regionId;
   state.loading = true;
   state.error = null;
   try {
-    plan.value = await api.plan(state.regionId, options);
+    const fresh = await api.plan(id, options);
+    if (mine !== token) return;
+    plan.value = fresh;
   } catch (e) {
+    if (mine !== token) return;
     state.error = String(e.message ?? e);
   } finally {
-    state.loading = false;
+    if (mine === token) state.loading = false;
   }
 }
