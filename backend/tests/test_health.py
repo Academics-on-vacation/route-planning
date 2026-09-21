@@ -1,7 +1,8 @@
+import pytest
 from fastapi.testclient import TestClient
 
 
-def test_health(monkeypatch) -> None:
+def test_health(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("DB_PASSWORD", "test-only-password")
     from app.main import app
 

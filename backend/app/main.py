@@ -30,26 +30,26 @@ async def database_health() -> dict[str, str]:
 
 
 @app.get("/api/plan")
-def test_plan():
+def test_plan() -> JSONResponse:
     return load_json("./app/mock/plan.json")
 
 
 @app.get("/api/regions")
-def test_regions():
+def test_regions() -> JSONResponse:
     return load_json("./app/mock/regions.json")
 
 
 @app.get("/api/regions/{regionId}/requests")
-def test_requests(regionId: str):
+def test_requests(regionId: str) -> JSONResponse:
     return load_json("./app/mock/requests.json")
 
 
 @app.get("/api/regions/{regionId}/engineers")
-def test_engineers():
+def test_engineers() -> JSONResponse:
     return load_json("./app/mock/engineers.json")
 
 
-def load_json(filename: str):
+def load_json(filename: str) -> JSONResponse:
     with open(filename, encoding="utf-8") as f:
         data = json.load(f)
     return JSONResponse(content=data)

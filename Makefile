@@ -1,6 +1,6 @@
 COMPOSE ?= docker compose
 
-.PHONY: install up down restart logs ps build check compose-check backend-test format install-hooks clean
+.PHONY: install up down restart logs ps build check compose-check backend-test lint format format-check install-hooks clean
 
 install:
 	$(MAKE) -C backend install
@@ -35,9 +35,16 @@ check:
 compose-check:
 	$(COMPOSE) config --quiet
 
+lint:
+	$(MAKE) -C backend lint
+
 format:
 	$(MAKE) -C backend format
 	$(MAKE) -C frontend format
+
+format-check:
+	$(MAKE) -C backend format-check
+	$(MAKE) -C frontend format-check
 
 install-hooks:
 	uv run --project backend pre-commit install
