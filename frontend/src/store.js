@@ -28,8 +28,11 @@ export const SKILLS = {
 export const state = reactive({
   regions: [],
   regionId: null,
-  requests: {},
   pendingRegionId: null,
+  loadingSince: null,
+  stage: null,
+  lastLoadMs: 4000,
+  requests: {},
   engineers: {},
   selected: null,
   hovered: null,
@@ -158,8 +161,11 @@ let token = 0;
 
 export async function loadRegion(id) {
   const mine = ++token;
+  const startedAt = Date.now();
   state.pendingRegionId = id;
   state.loading = true;
+  state.loadingSince = startedAt;
+  state.stage = "refs";
   state.error = null;
   clearSelection();
   plan.value = null;
@@ -174,9 +180,13 @@ export async function loadRegion(id) {
     state.requests = indexById(reqs);
     state.engineers = indexById(engs);
 
+    // Дальше считает солвер — самая долгая часть загрузки.
+    state.stage = "plan";
     const fresh = await api.plan(id);
     if (mine !== token) return;
     plan.value = fresh;
+    // Ориентир для полосы прогресса на следующий раз.
+    state.lastLoadMs = Date.now() - startedAt;
   } catch (e) {
     if (mine !== token) return;
     state.error = String(e.message ?? e);
@@ -193,16 +203,23 @@ export async function loadRegion(id) {
 export async function rebuild(options = {}) {
   const mine = ++token;
   const id = state.regionId;
+  const startedAt = Date.now();
   state.loading = true;
+  state.loadingSince = startedAt;
+  state.stage = "plan";
   state.error = null;
   try {
     const fresh = await api.plan(id, options);
     if (mine !== token) return;
     plan.value = fresh;
+    state.lastLoadMs = Date.now() - startedAt;
   } catch (e) {
     if (mine !== token) return;
     state.error = String(e.message ?? e);
   } finally {
-    if (mine === token) state.loading = false;
+    if (mine === token) {
+      state.loading = false;
+      state.stage = null;
+    }
   }
 }

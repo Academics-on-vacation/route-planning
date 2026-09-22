@@ -4,6 +4,7 @@ import { computed, onBeforeUnmount, onMounted, watch } from "vue";
 import GanttPanel from "../components/GanttPanel.vue";
 import ListPanel from "../components/ListPanel.vue";
 import MapView from "../components/MapView.vue";
+import RouteLoader from "../components/RouteLoader.vue";
 import TransportChip from "../components/TransportChip.vue";
 import {
   SKILLS,
@@ -51,7 +52,11 @@ const slack = computed(() => {
 </script>
 
 <template>
-  <div class="flex-1 min-h-0 grid grid-cols-[336px_1fr] gap-2.5 p-2.5">
+  <div
+    class="relative flex-1 min-h-0 grid grid-cols-[336px_1fr] gap-2.5 p-2.5"
+  >
+    <RouteLoader />
+
     <div class="panel flex flex-col min-h-0">
       <ListPanel class="flex-1 min-h-0" />
 
