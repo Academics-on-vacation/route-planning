@@ -1,10 +1,15 @@
 from __future__ import annotations
 
+import logging
 import os
 from datetime import datetime
 from typing import NamedTuple
 
 import requests
+
+from app.logging_config import configure_logging
+
+logger = logging.getLogger(__name__)
 
 KEY = os.environ.get("TWOGIS_API_KEY")
 
@@ -130,6 +135,7 @@ def _post(url: str, body: dict):
 
 
 if __name__ == "__main__":
+    configure_logging()
     # python twogis.py — проверить, что ключ работает и время влияет
     office = (55.702267, 37.773852)
     client = (55.740094, 37.657031)
@@ -137,5 +143,5 @@ if __name__ == "__main__":
 
     for hour in (9, 15, 23):
         when = day.replace(hour=hour)
-        print(f"{hour:02d}:00  машина: {car_route(office, client, when)}")
-    print(f"       транспорт: {pedestrian_route(office, client, day)}")
+        logger.info(f"{hour:02d}:00 машина: {car_route(office, client, when)}")
+    logger.info(f"транспорт: {pedestrian_route(office, client, day)}")

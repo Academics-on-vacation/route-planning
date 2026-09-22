@@ -7,7 +7,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_session
 from app.helpers import repository, service
+from app.logging_config import configure_logging
 from app.models.domain import Region
+
+configure_logging()
 
 app = FastAPI(title="Route Planning API", version="0.1.0")
 app.add_middleware(

@@ -1,4 +1,4 @@
-.PHONY: install sync run test lint format format-check check docker-build clean
+.PHONY: install sync run migrate test lint format format-check check docker-build clean
 
 install: sync
 
@@ -7,6 +7,9 @@ sync:
 
 run:
 	uv run --env-file ../.env uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+migrate:
+	uv run --locked --env-file ../.env alembic upgrade head
 
 test:
 	uv run --locked pytest
