@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "FastAPI backend for the route planning prototype."
 requires-python = ">=3.12,<3.15"
 dependencies = [
+    "alembic==1.20.0",
     "asyncpg==0.30.0",
     "fastapi==0.116.1",
     "pydantic-settings==2.10.1",

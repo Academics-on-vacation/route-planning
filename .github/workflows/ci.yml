@@ -16,6 +16,27 @@ permissions:
 jobs:
   backend:
     runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: route_planning_test
+          POSTGRES_USER: route_planning_test
+          POSTGRES_PASSWORD: migration-test-only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U route_planning_test -d route_planning_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      RUN_MIGRATION_TESTS: '1'
+      DB_HOST: localhost
+      DB_PORT: '5432'
+      DB_NAME: route_planning_test
+      DB_USER: route_planning_test
+      DB_PASSWORD: migration-test-only
     defaults:
       run:
         working-directory: backend
