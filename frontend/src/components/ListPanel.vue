@@ -35,6 +35,7 @@ watch(
 );
 
 const districtOf = (id) => state.requests[String(id)]?.district ?? "";
+const skillOf = (id) => state.requests[String(id)]?.skill ?? "";
 </script>
 
 <template>
@@ -58,7 +59,7 @@ const districtOf = (id) => state.requests[String(id)]?.district ?? "";
           <span class="min-w-0 truncate">
             {{ route.engineer_name }}
             <small class="num block text-[10.5px] font-normal text-muted">
-              {{ route.stops.length }} зв,
+              {{ route.stops.length }} заявок,
               {{ route.distance_km?.toFixed(0) }} км, до
               {{ hhmm(route.finish_at) }}
             </small>
@@ -93,7 +94,7 @@ const districtOf = (id) => state.requests[String(id)]?.district ?? "";
             <span class="num text-[12px] text-muted mr-1.5">
               {{ hhmm(stop.start_at) }}
             </span>
-            <span class="num text-[12.5px] font-medium">{{
+            <span :class="skillOf(stop.request_id) === 'emergency' ? 'num text-[12.5px] font-bold text-yellow-800' : 'num text-[12.5px] font-medium'">{{
               stop.request_id
             }}</span>
             <span class="ml-1 text-muted">{{
