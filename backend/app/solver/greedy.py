@@ -3,12 +3,12 @@ import time
 from datetime import datetime
 from time import sleep
 
-from .improve import improve
 from ..helpers.cache import LegCache
 from ..helpers.estimator import OVERHEAD_MIN, REASONS, estimate
 from ..models.domain import Engeneer, Plan, Point, Route, Stop, Ticket, TransportType, Unassigned
-from .interface import Solver
+from .improve import improve
 from .improve import schedule as replay
+from .interface import Solver
 
 logger = logging.getLogger(__name__)
 
@@ -189,7 +189,7 @@ class GreedySolver(Solver):
             )
 
         cached = self.cache.get(transport, a.coords, b.coords, when)
-#         logger.debug(cached)
+        #         logger.debug(cached)
         if cached is not None:
             self.cache_taken += 1
             return cached[0] + OVERHEAD_MIN, round(cached[1], 2)

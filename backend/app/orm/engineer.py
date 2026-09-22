@@ -3,13 +3,13 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     CheckConstraint,
+    Double,
     Enum,
     ForeignKey,
     Index,
     String,
     UniqueConstraint,
     text,
-    Double
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
