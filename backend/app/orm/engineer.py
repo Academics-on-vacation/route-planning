@@ -9,6 +9,7 @@ from sqlalchemy import (
     String,
     UniqueConstraint,
     text,
+    Double
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -47,3 +48,6 @@ class Engineer(Base):
 
     region: Mapped["Region"] = relationship(back_populates="engineers")
     fact_requests: Mapped[list["Request"]] = relationship(back_populates="fact_engineer")
+
+    start_lat: Mapped[float | None] = mapped_column(Double)
+    start_lon: Mapped[float | None] = mapped_column(Double)

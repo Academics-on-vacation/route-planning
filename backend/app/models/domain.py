@@ -171,6 +171,8 @@ class Engeneer:
     @classmethod
     def from_row(cls, row, office: Point) -> "Engeneer":
         # Старт — офис
+        if row.start_lat is not None and row.start_lon is not None:
+            office = Point(row.start_lat, row.start_lon)
         return cls(
             id=row.id,
             name=row.name,
@@ -189,6 +191,8 @@ class Engeneer:
             "transport": self.transport.value,
             "shift_start": at(day, self.work_shift_start_minutes),
             "shift_end": at(day, self.work_shift_end_minutes),
+            "start_lat": self.start_point.latitude,
+            "start_lon": self.start_point.longitude,
         }
 
     def __repr__(self):

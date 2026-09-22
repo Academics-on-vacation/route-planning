@@ -25,6 +25,8 @@ CREATE TABLE engineer (
     shift_start TIME NOT NULL DEFAULT '09:00',
     shift_end TIME NOT NULL DEFAULT '22:00',
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    start_lat DOUBLE PRECISION,
+    start_lon DOUBLE PRECISION
 
     UNIQUE (region_id, name),
     CHECK (shift_end > shift_start)

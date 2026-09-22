@@ -2,10 +2,12 @@ import time
 from datetime import datetime
 from time import sleep
 
+from .improve import improve
 from ..helpers.cache import LegCache
 from ..helpers.estimator import OVERHEAD_MIN, REASONS, estimate
 from ..models.domain import Engeneer, Plan, Point, Route, Stop, Ticket, TransportType, Unassigned
 from .interface import Solver
+from .improve import schedule as replay
 
 """
 Жадный планировщик.
@@ -17,17 +19,25 @@ from .interface import Solver
 """
 
 
+# Потолок одного переезда.
+MAX_LEG_MIN = 90
+
+
 class GreedySolver(Solver):
     def __init__(
         self,
         work_date: datetime | None = None,
         use_api: bool = False,
         cache: LegCache | None = None,
+        max_leg_min: int = MAX_LEG_MIN,
+        polish: bool = True,
     ):
         super().__init__()
         self.work_date = work_date
         self.use_api = use_api
         self.cache = cache or LegCache()
+        self.max_leg_min = max_leg_min
+        self.polish = polish
         self.cache_taken = 0
         self.api_calls = 0
 
@@ -37,6 +47,7 @@ class GreedySolver(Solver):
     def solve(self, tickets: list[Ticket], engeneers: list[Engeneer]) -> Plan:
         started = time.monotonic()
         self.api_calls = 0
+        self.cache_taken = 0
 
         # Состояние на время прогона: маршрут, где инженер сейчас и когда освободится.
         routes = {e.id: Route(e) for e in engeneers}
@@ -48,12 +59,18 @@ class GreedySolver(Solver):
             tickets, key=lambda t: (t.work_start, t.priority, t.work_finish - t.work_start)
         )
 
+        # for index, ticket in enumerate(order):
+        #     print(f"{index} - {ticket.id} ({ticket.work_start}, {ticket.work_finish}, {ticket.priority}, {ticket.duration_minutes})")
+
         for ticket in order:
             reason = self._place(ticket, engeneers, routes, position, free_at)
             if reason:
                 unassigned.append(Unassigned(ticket, reason, REASONS[reason]))
 
-        print(f"Api calls: {self.api_calls}, from cache: {self.cache_taken}")
+        polish = {}
+        if self.polish:
+            routes, unassigned, polish = self._polish(routes, unassigned, engeneers)
+
         return Plan(
             routes=list(routes.values()),
             unassigned=unassigned,
@@ -61,9 +78,32 @@ class GreedySolver(Solver):
                 "solver": self.get_name(),
                 "provider": "2gis" if self.use_api else "haversine",
                 "api_calls": self.api_calls,
+                # Сколько плеч отдал кэш — столько запросов не ушло в 2ГИС.
+                "cache_hits": self.cache_taken,
+                "max_leg_min": self.max_leg_min,
+                "polish": polish,
                 "runtime_ms": int((time.monotonic() - started) * 1000),
             },
         )
+
+    def _polish(self, routes, unassigned, engeneers):
+        """
+        Улучшаем план с помощью перестановок
+        """
+        order = {e.id: [s.ticket for s in routes[e.id].stops] for e in engeneers}
+        why = {u.ticket.id: (u.reason, u.reason_text) for u in unassigned}
+        order, dropped, stats = improve(order, [u.ticket for u in unassigned], engeneers, estimate)
+
+        rough = 0
+        for eng in engeneers:
+            got = replay(eng, order[eng.id], self._road) if self.use_api else None
+            if got is None:
+                got = replay(eng, order[eng.id], estimate)
+                rough += 1 if self.use_api else 0
+            routes[eng.id].stops = got[0] if got else []
+
+        stats["rough_routes"] = rough
+        return routes, [Unassigned(t, *why[t.id]) for t in dropped], stats
 
     def _place(self, ticket, engeneers, routes, position, free_at) -> str | None:
         """Пристроить заявку. Возвращает код причины, если не вышло."""
@@ -80,8 +120,10 @@ class GreedySolver(Solver):
             ):
                 rejected.add("transport")
                 continue
-
             minutes, km = estimate(position[eng.id], ticket.point, eng.transport, free_at[eng.id])
+            if minutes > self.max_leg_min:
+                rejected.add("distance")
+                continue
             fit = self._fit(ticket, eng, free_at[eng.id], minutes)
             if fit is None:
                 rejected.add("capacity")
@@ -91,19 +133,20 @@ class GreedySolver(Solver):
             candidates.append((minutes + wait, km, eng))
 
         if not candidates:
-            for code in ("skill", "transport", "capacity"):
+            for code in ("capacity", "distance", "transport", "skill"):
                 if code in rejected:
+                    # print(f"{code} error---------")
                     return code
             return "capacity"
 
         candidates.sort(key=lambda c: (c[0], c[1]))
         # Шаг 3: подтверждаем настоящей дорогой.
-        print()
-        print("Candidtaed:")
+        # print("Candidtaed:")
         for _score, _km, eng in candidates[:3]:
             depart = free_at[eng.id]
             minutes, km = self._road(position[eng.id], ticket.point, eng.transport, depart)
-            print(f"Eng: {eng.name}, Minutes: {minutes}, KM: {km}, (_km: {_km}, score: {_score})")
+            if minutes > self.max_leg_min:
+                continue
             fit = self._fit(ticket, eng, depart, minutes)
             if fit is None:
                 continue
@@ -142,7 +185,7 @@ class GreedySolver(Solver):
             )
 
         cached = self.cache.get(transport, a.coords, b.coords, when)
-        print(cached)
+        # print(cached)
         if cached is not None:
             self.cache_taken += 1
             return cached[0] + OVERHEAD_MIN, round(cached[1], 2)
@@ -150,10 +193,10 @@ class GreedySolver(Solver):
         try:
             self.api_calls += 1
             fn = car_route if transport == TransportType.CAR else pedestrian_route
-            sleep(1)
+            sleep(0.2)
             leg = fn(a.coords, b.coords, when)
         except Exception as e:
-            print("!!!!!__________ОШИБКА______________!!!!")
+            # print("!!!!!__________ОШИБКА______________!!!!")
             print(f"Тип: {type(e).__name__}")
             print(f"Сообщение: {e}")
             return estimate(a, b, transport, depart)
