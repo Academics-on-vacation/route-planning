@@ -94,9 +94,14 @@ const skillOf = (id) => state.requests[String(id)]?.skill ?? "";
             <span class="num text-[12px] text-muted mr-1.5">
               {{ hhmm(stop.start_at) }}
             </span>
-            <span :class="skillOf(stop.request_id) === 'emergency' ? 'num text-[12.5px] font-bold text-yellow-800' : 'num text-[12.5px] font-medium'">{{
-              stop.request_id
-            }}</span>
+            <span
+              :class="
+                skillOf(stop.request_id) === 'emergency'
+                  ? 'num text-[12.5px] font-bold text-yellow-800'
+                  : 'num text-[12.5px] font-medium'
+              "
+              >{{ stop.request_id }}</span
+            >
             <span class="ml-1 text-muted">{{
               districtOf(stop.request_id)
             }}</span>

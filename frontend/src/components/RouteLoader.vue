@@ -50,7 +50,6 @@ onBeforeUnmount(() => {
   clearTimeout(doneTimer);
 });
 
-
 const percent = computed(() => {
   if (done.value) return 100;
   const eta = Math.max(800, state.lastLoadMs || 4000);
@@ -90,8 +89,7 @@ const step = computed(() => {
   >
     <div
       v-if="visible"
-      class="loader-overlay absolute inset-0 z-[1200] flex flex-col
-             items-center justify-center gap-6"
+      class="loader-overlay absolute inset-0 z-[1200] flex flex-col items-center justify-center gap-6"
       role="status"
       aria-live="polite"
     >
@@ -279,8 +277,19 @@ const step = computed(() => {
         </g>
 
         <!-- Бригада едет по только что проложенному маршруту -->
-        <circle r="3.4" fill="var(--color-brand)" stroke="var(--color-ink)" stroke-width="1.6">
-          <animateMotion dur="3.2s" repeatCount="indefinite" keyPoints="0;1;1" keyTimes="0;.7;1" calcMode="linear">
+        <circle
+          r="3.4"
+          fill="var(--color-brand)"
+          stroke="var(--color-ink)"
+          stroke-width="1.6"
+        >
+          <animateMotion
+            dur="3.2s"
+            repeatCount="indefinite"
+            keyPoints="0;1;1"
+            keyTimes="0;.7;1"
+            calcMode="linear"
+          >
             <mpath href="#ld-route" />
           </animateMotion>
         </circle>
@@ -291,9 +300,7 @@ const step = computed(() => {
 
         <div class="w-[260px] h-1 rounded-full bg-ink/10 overflow-hidden">
           <div
-            class="h-full rounded-full bg-gradient-to-r from-brand to-brand-deep
-                   shadow-[0_0_10px_rgba(255,204,0,.7)] transition-[width]
-                   duration-200 ease-out"
+            class="h-full rounded-full bg-gradient-to-r from-brand to-brand-deep shadow-[0_0_10px_rgba(255,204,0,.7)] transition-[width] duration-200 ease-out"
             :style="{ width: percent + '%' }"
           />
         </div>
@@ -301,8 +308,8 @@ const step = computed(() => {
         <div
           class="num flex items-center gap-2 text-[11px] text-muted tabular-nums"
         >
-<!--          <span>{{ step }}</span>-->
-<!--          <span class="opacity-40">·</span>-->
+          <!--          <span>{{ step }}</span>-->
+          <!--          <span class="opacity-40">·</span>-->
           <span>{{ seconds }} с</span>
         </div>
       </div>
