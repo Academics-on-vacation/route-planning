@@ -5,7 +5,7 @@ from yandex_geocoder import Client, NothingFound, YandexGeocoderException
 
 from app.config import settings
 from app.db import session_factory
-from app.orm import Request
+from app.orm.request import Request
 
 
 async def geocode_all_requests() -> None:

@@ -80,4 +80,3 @@ CREATE TABLE IF NOT EXISTS route_cache (
     );
 
 CREATE INDEX IF NOT EXISTS ix_route_cache_departure ON route_cache (departure_at);
-
