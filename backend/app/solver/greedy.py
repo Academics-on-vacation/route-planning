@@ -1,3 +1,4 @@
+import logging
 import time
 from datetime import datetime
 from time import sleep
@@ -6,6 +7,8 @@ from ..helpers.cache import LegCache
 from ..helpers.estimator import OVERHEAD_MIN, REASONS, estimate
 from ..models.domain import Engeneer, Plan, Point, Route, Stop, Ticket, TransportType, Unassigned
 from .interface import Solver
+
+logger = logging.getLogger(__name__)
 
 """
 Жадный планировщик.
@@ -53,7 +56,7 @@ class GreedySolver(Solver):
             if reason:
                 unassigned.append(Unassigned(ticket, reason, REASONS[reason]))
 
-        print(f"Api calls: {self.api_calls}, from cache: {self.cache_taken}")
+        logger.info(f"Api calls: {self.api_calls}, from cache: {self.cache_taken}")
         return Plan(
             routes=list(routes.values()),
             unassigned=unassigned,
@@ -98,12 +101,13 @@ class GreedySolver(Solver):
 
         candidates.sort(key=lambda c: (c[0], c[1]))
         # Шаг 3: подтверждаем настоящей дорогой.
-        print()
-        print("Candidtaed:")
+        logger.debug("Candidated:")
         for _score, _km, eng in candidates[:3]:
             depart = free_at[eng.id]
             minutes, km = self._road(position[eng.id], ticket.point, eng.transport, depart)
-            print(f"Eng: {eng.name}, Minutes: {minutes}, KM: {km}, (_km: {_km}, score: {_score})")
+            logger.debug(
+                f"Eng: {eng.name}, Minutes: {minutes}, KM: {km}, (_km: {_km}, score: {_score})"
+            )
             fit = self._fit(ticket, eng, depart, minutes)
             if fit is None:
                 continue
@@ -142,7 +146,7 @@ class GreedySolver(Solver):
             )
 
         cached = self.cache.get(transport, a.coords, b.coords, when)
-        print(cached)
+        logger.debug(cached)
         if cached is not None:
             self.cache_taken += 1
             return cached[0] + OVERHEAD_MIN, round(cached[1], 2)
@@ -152,10 +156,11 @@ class GreedySolver(Solver):
             fn = car_route if transport == TransportType.CAR else pedestrian_route
             sleep(1)
             leg = fn(a.coords, b.coords, when)
-        except Exception as e:
-            print("!!!!!__________ОШИБКА______________!!!!")
-            print(f"Тип: {type(e).__name__}")
-            print(f"Сообщение: {e}")
+        except Exception:
+            logger.warning(
+                "Ошибка построения маршрута 2ГИС, используется оценка расстояния",
+                exc_info=True,
+            )
             return estimate(a, b, transport, depart)
 
         self.cache.put(transport, a.coords, b.coords, when, leg.minutes, leg.km, leg.raw)

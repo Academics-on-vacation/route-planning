@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import logging
 from datetime import datetime, timedelta
+
+logger = logging.getLogger(__name__)
 
 PRECISION = 5
 
@@ -51,7 +54,7 @@ class LegCache:
     def put(self, transport, origin, destination, when, minutes, km, payload) -> None:
         """Запомнить ответ API. Кладём его как есть, без накидок солвера"""
 
-        print(f"Готовлю запись в КЭШ: {transport}, {origin}, {destination}, {when}")
+        logger.debug(f"Готовлю запись в КЭШ: {transport}, {origin}, {destination}, {when}")
         if when is None:
             return
         key = leg_key(transport, origin, destination, when)
