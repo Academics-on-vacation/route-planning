@@ -46,8 +46,8 @@ class Engineer(Base):
     shift_end: Mapped[time] = mapped_column(default=time(22, 0), server_default=text("'22:00'"))
     is_active: Mapped[bool] = mapped_column(default=True, server_default=text("true"))
 
+    start_lat: Mapped[float | None] = mapped_column(Double, nullable=True)
+    start_lon: Mapped[float | None] = mapped_column(Double, nullable=True)
+
     region: Mapped["Region"] = relationship(back_populates="engineers")
     fact_requests: Mapped[list["Request"]] = relationship(back_populates="fact_engineer")
-
-    start_lat: Mapped[float | None] = mapped_column(Double)
-    start_lon: Mapped[float | None] = mapped_column(Double)
