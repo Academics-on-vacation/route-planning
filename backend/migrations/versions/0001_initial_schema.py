@@ -36,8 +36,6 @@ def upgrade() -> None:
         sa.Column("shift_start", sa.Time(), server_default=sa.text("'09:00'"), nullable=False),
         sa.Column("shift_end", sa.Time(), server_default=sa.text("'22:00'"), nullable=False),
         sa.Column("is_active", sa.Boolean(), server_default=sa.text("true"), nullable=False),
-        sa.Column("start_lat", sa.Double(), nullable=True),
-        sa.Column("start_lon", sa.Double(), nullable=True),
         sa.ForeignKeyConstraint(["region_id"], ["region.id"], ondelete="CASCADE"),
         sa.UniqueConstraint("region_id", "name"),
         sa.CheckConstraint("shift_end > shift_start", name="ck_engineer_shift"),

@@ -1,5 +1,7 @@
 .PHONY: install sync run migrate test lint format format-check check docker-build clean
 
+ENV_FILE ?= $(wildcard ../.env)
+
 install: sync
 
 sync:
@@ -9,7 +11,7 @@ run:
 	uv run --env-file ../.env uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 migrate:
-	uv run --locked --env-file ../.env alembic upgrade head
+	uv run --locked $(if $(ENV_FILE),--env-file "$(ENV_FILE)") alembic upgrade head
 
 test:
 	uv run --locked pytest
