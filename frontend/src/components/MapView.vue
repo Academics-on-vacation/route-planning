@@ -82,6 +82,25 @@ function officeIcon() {
   });
 }
 
+function homeIcon() {
+  return L.divIcon({
+    className: "",
+    iconSize: [15, 15],
+    iconAnchor: [12, 12],
+    html: `
+      <div class="map-home">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M3 11.2 12 4l9 7.2" fill="none" stroke="currentColor"
+                stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M5.5 10.6V19h13v-8.4" fill="none" stroke="currentColor"
+                stroke-width="2.1" stroke-linejoin="round"/>
+          <path d="M10 19v-4.2h4V19" fill="none" stroke="currentColor"
+                stroke-width="2.1" stroke-linejoin="round"/>
+        </svg>
+      </div>`,
+  });
+}
+
 function pin(color, size, ring) {
   return L.divIcon({
     className: "",
@@ -120,7 +139,15 @@ function redraw() {
   for (const route of routes.value) {
     const color = colorOfEngineer.value[String(route.engineer_id)];
     const path = [];
-    if (route.start) path.push([route.start.lat, route.start.lon]);
+    if (route.start) {
+      path.push([route.start.lat, route.start.lon]);
+      L.marker([route.start.lat, route.start.lon], {
+        icon: homeIcon(),
+        zIndexOffset: 1000,
+      })
+        .bindPopup(`<b>Дом (старт) инженера «${route.engineer_name}»</b>`)
+        .addTo(layer);
+    }
 
     for (const stop of route.stops) {
       const req = state.requests[String(stop.request_id)];

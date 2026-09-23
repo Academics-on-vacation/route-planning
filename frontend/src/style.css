@@ -88,6 +88,19 @@
   box-shadow: 0 1px 3px rgb(0 0 0 / 0.35);
 }
 
+.map-home {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgb(63, 113, 207);
+  border: 2px solid #ffffff;
+  color: #ffffff;
+  box-shadow: 0 2px 7px rgba(255, 255, 255, 0.35);
+}
+
 /* Офис — квадрат, чтобы не путался с круглыми точками заявок. */
 .map-office {
   position: relative;
@@ -132,7 +145,6 @@
   }
 }
 
-/* На проекторе и у тех, кто просил меньше движения, кольцо замирает. */
 @media (prefers-reduced-motion: reduce) {
   .map-office::before {
     animation: none;
