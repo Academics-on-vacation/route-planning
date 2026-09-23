@@ -67,7 +67,7 @@ services:
       resources:
         limits:
           memory: 512m
-          cpus: "0.5"
+          cpus: "2.0"
 
   frontend:
     build:
