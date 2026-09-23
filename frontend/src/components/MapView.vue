@@ -35,7 +35,9 @@ const INK = "#14161a";
 onMounted(() => {
   map = L.map(el.value, { preferCanvas: true }).setView([55.7, 37.7], 10);
   // L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+  L.tileLayer(
+    "https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png",
+  ).addTo(map);
   layer = L.layerGroup().addTo(map);
   // Клик по пустому месту снимает выделение — привычный жест.
   map.on("click", () => select(null));
@@ -175,7 +177,7 @@ function redraw() {
 
     lines.set(
       String(route.engineer_id),
-      L.polyline(route.geometry ?? path, { color, weight: 3, opacity: 0.75 })
+      L.polyline(route.geometry ?? path, { color, weight: 5, opacity: 0.75 })
         // Клик по линии = клик по имени инженера в списке.
         .on("click", (e) => {
           L.DomEvent.stop(e);
