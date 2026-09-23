@@ -83,6 +83,17 @@ async def create_request(
     return request_to_json(row)
 
 
+@app.delete("/api/requests/{request_id}", status_code=204)
+async def delete_request(
+    request_id: int,
+    session: AsyncSession = Depends(get_session),
+) -> None:
+    """Удаление: is_active=false. Заявка исчезает из GET /requests
+    и перестаёт участвовать в планировании, но остаётся в БД."""
+    if not await repository.soft_delete_request(session, request_id):
+        raise HTTPException(404, f"Заявки {request_id} нет")
+
+
 @app.get("/api/regions/{region_id}/engineers")
 async def get_engineers(
     region_id: int,

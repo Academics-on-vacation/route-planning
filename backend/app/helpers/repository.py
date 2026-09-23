@@ -52,6 +52,15 @@ async def list_engineers(session: AsyncSession, region_id: int) -> list[Engineer
     return list(rows)
 
 
+async def soft_delete_request(session: AsyncSession, request_id: int) -> bool:
+    row = await session.get(Request, request_id)
+    if row is None:
+        return False
+    row.is_active = False
+    await session.commit()
+    return True
+
+
 async def request_exists(session: AsyncSession, region_id: int, external_id: str) -> bool:
     found = await session.scalar(
         select(Request.id).where(Request.region_id == region_id, Request.external_id == external_id)
