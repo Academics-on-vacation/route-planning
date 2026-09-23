@@ -17,6 +17,7 @@ services:
       retries: 10
     networks:
       - database
+      - grafana-datasources-net
     deploy:
       resources:
         limits:
@@ -96,3 +97,5 @@ volumes:
 networks:
   backend: {}
   database: {}
+  grafana-datasources-net:
+    external: true
