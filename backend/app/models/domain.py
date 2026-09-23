@@ -112,10 +112,11 @@ class Ticket:
         self.district = district
 
     @classmethod
-    def from_row(cls, row, public_id: str) -> "Ticket":
+    def from_row(cls, row, public_id: str, office: Point) -> "Ticket":
+        point = Point(row.lat, row.lon) if row.lat is not None and row.lon is not None else office
         return cls(
             id=public_id,
-            point=Point(row.lat, row.lon),
+            point=point,
             duration_minutes=row.duration_min,
             work_start=minutes_of(row.window_start),
             work_finish=minutes_of(row.window_end),

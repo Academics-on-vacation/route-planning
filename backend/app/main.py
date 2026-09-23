@@ -9,6 +9,7 @@ from app.db import get_session
 from app.helpers import repository, service
 from app.logging_config import configure_logging
 from app.models.domain import Region
+from app.schemas import RequestCreate, request_to_json
 
 configure_logging()
 
@@ -55,13 +56,29 @@ async def get_requests(
 ) -> list[dict]:
     """Справочник заявок. Фронт держит его отдельно от плана: план
     ссылается на заявки по id и координаты в себе не носит."""
-    await _region(session, region_id)
+    region = await _region(session, region_id)
     work_date = work_date or await repository.first_work_date(session, region_id)
     if work_date is None:
         return []
 
-    tickets = await service.load_tickets(session, region_id, work_date)
+    tickets = await service.load_tickets(session, region_id, work_date, region.office)
     return [t.to_json(work_date) for t in tickets]
+
+
+@app.post("/api/regions/{region_id}/requests", status_code=201)
+async def create_request(
+    region_id: int,
+    payload: RequestCreate,
+    session: AsyncSession = Depends(get_session),
+) -> dict:
+    """Создать заявку. lat/lon опциональны: без них заявка сохранится
+    с NULL-координатами и будет стартовать из офиса, пока её не геокодируют."""
+    await _region(session, region_id)
+    try:
+        row = await service.create_request(session, region_id, payload)
+    except service.DuplicateRequestError as error:
+        raise HTTPException(409, str(error)) from error
+    return request_to_json(row)
 
 
 @app.get("/api/regions/{region_id}/engineers")
