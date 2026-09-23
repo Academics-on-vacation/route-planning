@@ -39,6 +39,8 @@ onMounted(() => {
   layer = L.layerGroup().addTo(map);
   // Клик по пустому месту снимает выделение — привычный жест.
   map.on("click", () => select(null));
+
+  document.querySelector(".leaflet-control-attribution").remove();
   redraw();
 });
 
