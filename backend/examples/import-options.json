@@ -1,0 +1,19 @@
+{
+  "region": "Пример импорта",
+  "dataset": "synthetic",
+  "dry_run": true,
+  "engineers": [
+    {
+      "name": "Инженер 001",
+      "skills": ["local", "install"],
+      "transport": "transit",
+      "shift_start": "09:00",
+      "shift_end": "22:00"
+    }
+  ],
+  "coordinates": {
+    "Тестовый офис": {"lat": 55.75, "lon": 37.62},
+    "Тестовый адрес А": {"lat": 55.751, "lon": 37.621},
+    "Тестовый адрес Б": {"lat": 55.752, "lon": 37.622}
+  }
+}
