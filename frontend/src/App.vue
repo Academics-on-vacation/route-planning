@@ -1,5 +1,6 @@
 <script setup>
-import { RouterLink, RouterView } from "vue-router";
+import { computed } from "vue";
+import { RouterLink, RouterView, useRoute } from "vue-router";
 
 import { metrics, state } from "./store.js";
 

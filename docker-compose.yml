@@ -17,6 +17,12 @@ services:
       retries: 10
     networks:
       - database
+      - grafana-datasources-net
+    deploy:
+      resources:
+        limits:
+          memory: 128m
+          cpus: "0.1"
 
   migrate:
     build:
@@ -33,11 +39,19 @@ services:
         condition: service_healthy
     networks:
       - database
+    deploy:
+      resources:
+        limits:
+          memory: 128m
+          cpus: "0.5"
 
   backend:
     build:
       context: ./backend
-    environment: *database-environment
+    environment:
+      <<: *database-environment
+      YANDEX_GEOCODER_API_KEY: ${YANDEX_GEOCODER_API_KEY:-}
+      TWOGIS_API_KEY: ${TWOGIS_API_KEY:-}
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
     ports:
       - "127.0.0.1:8000:8000"
@@ -51,6 +65,11 @@ services:
     networks:
       - database
       - backend
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "2.0"
 
   frontend:
     build:
@@ -67,6 +86,11 @@ services:
       - backend
     networks:
       - backend
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "0.5"
 
 volumes:
   postgres-data:
@@ -74,3 +98,5 @@ volumes:
 networks:
   backend: {}
   database: {}
+  grafana-datasources-net:
+    external: true

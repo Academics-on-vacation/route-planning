@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import logging
 import os
+import random
+import time
 from datetime import datetime
 from typing import NamedTuple
 
@@ -12,6 +14,14 @@ from app.logging_config import configure_logging
 logger = logging.getLogger(__name__)
 
 KEY = os.environ.get("TWOGIS_API_KEY")
+
+TIMEOUT = 15
+
+RETRIES = 3  # попыток ПОСЛЕ первой
+BACKOFF_BASE = 0.8  # секунды до первого повтора
+BACKOFF_CAP = 8.0  # потолок одной паузы
+
+RETRY_STATUS = frozenset({408, 425, 429, 500, 502, 503, 504})
 
 ROUTING_URL = "https://routing.api.2gis.com/routing/7.0.0/global"
 TRANSIT_URL = "https://routing.api.2gis.com/public_transport/2.0"
@@ -50,7 +60,7 @@ def car_route(origin, destination, departure: datetime | None = None) -> Leg:
         "transport": "driving",
         "route_mode": "fastest",
         "traffic_mode": "statistics" if departure else "jam",
-        "output": "summary",
+        "output": "detailed",
     }
     if departure:
         body["utc"] = int(departure.timestamp())
@@ -59,10 +69,10 @@ def car_route(origin, destination, departure: datetime | None = None) -> Leg:
     if not result:
         raise RuntimeError("2ГИС: маршрут на машине не построен")
 
-    # Внимание: при output='summary' поля называются duration и length,
-    # а total_duration и total_distance бывают только у 'detailed'.
-    # Читать только total_* — значит молча получать нули.
-    return Leg(round(result[0]["duration"] / 60), result[0]["length"] / 1000, result[0])
+    route = result[0]
+    seconds = route.get("total_duration", route.get("duration")) or 0
+    meters = route.get("total_distance", route.get("length")) or 0
+    return Leg(round(seconds / 60), meters / 1000, route)
 
 
 def pedestrian_route(origin, destination, departure: datetime | None = None) -> Leg:
@@ -82,6 +92,11 @@ def pedestrian_route(origin, destination, departure: datetime | None = None) -> 
         raise RuntimeError("2ГИС: маршрут на транспорте не построен")
 
     best = min(variants, key=lambda v: v["total_duration"])
+
+    print("Car route")
+    print(variants)
+    print()
+
     return Leg(round(best["total_duration"] / 60), best["total_distance"] / 1000, best)
 
 
@@ -125,13 +140,60 @@ def car_routes(pairs, departure: datetime | None = None) -> list[Leg | None]:
     return out
 
 
+def _retry_after(resp) -> float | None:
+    value = resp.headers.get("Retry-After")
+    try:
+        return max(0.0, float(value))
+    except (TypeError, ValueError):
+        return None
+
+
+def _pause(attempt: int, asked: float | None) -> float:
+    if asked is not None:
+        return min(BACKOFF_CAP, asked)
+    delay = min(BACKOFF_CAP, BACKOFF_BASE * 2**attempt)
+    return delay * (0.5 + random.random() / 2)
+
+
 def _post(url: str, body: dict):
-    resp = requests.post(url, params={"key": KEY}, json=body, timeout=15)
-    if not resp.ok:
-        # Текст ответа здесь — самое полезное, что есть: 2ГИС пишет
-        # в нём, какое поле не понравилось.
-        raise RuntimeError(f"2ГИС {resp.status_code}: {resp.text[:200]}")
-    return resp.json()
+    """POST с повторами. Наружу отдаёт либо разобранный ответ, либо
+    RuntimeError последней попытки — вызывающий код на исключении
+    откатывается к оценке по прямой."""
+    last: Exception | None = None
+
+    for attempt in range(RETRIES + 1):
+        asked = None
+        try:
+            resp = requests.post(url, params={"key": KEY}, json=body, timeout=TIMEOUT)
+        except requests.RequestException as e:
+            last = RuntimeError(f"2ГИС недоступен: {type(e).__name__}")
+        else:
+            if resp.ok:
+                try:
+                    return resp.json()
+                except ValueError:
+                    last = RuntimeError("2ГИС: ответ не разобрался как JSON")
+            else:
+                last = RuntimeError(f"2ГИС {resp.status_code}: {resp.text[:200]}")
+                if resp.status_code not in RETRY_STATUS:
+                    raise last
+                asked = _retry_after(resp)
+
+        if attempt == RETRIES:
+            break
+
+        pause = _pause(attempt, asked)
+        logger.warning(
+            "2ГИС: попытка %d из %d не удалась (%s), повтор через %.1f с",
+            attempt + 1,
+            RETRIES + 1,
+            last,
+            pause,
+        )
+        time.sleep(pause)
+
+    logger.error("2ГИС: %d попыток подряд без ответа (%s)", RETRIES + 1, last)
+    raise last
 
 
 if __name__ == "__main__":

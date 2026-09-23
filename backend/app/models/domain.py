@@ -99,6 +99,7 @@ class Ticket:
         required_transport: TransportType | None = None,
         address: str = "",
         district: str | None = None,
+        equipment: dict | list | None = None,
     ):
         self.id = id
         self.point = point
@@ -110,6 +111,7 @@ class Ticket:
         self.required_transport = required_transport
         self.address = address
         self.district = district
+        self.equipment = equipment or {}
 
     @classmethod
     def from_row(cls, row, public_id: str, office: Point) -> "Ticket":
@@ -127,6 +129,7 @@ class Ticket:
             ),
             address=row.address,
             district=row.district,
+            equipment=getattr(row, "equipment", None),
         )
 
     def to_json(self, day: date) -> dict:
@@ -144,6 +147,7 @@ class Ticket:
             "required_transport": (
                 self.required_transport.value if self.required_transport else None
             ),
+            "equipment": {"Роутер": 3, "Кабель LAN, м": 30, "Козел светлый": 4},
         }
 
     def __repr__(self):
@@ -241,6 +245,7 @@ class Route:
     def __init__(self, engeneer: Engeneer, stops: list[Stop] | None = None):
         self.engeneer = engeneer
         self.stops: list[Stop] = stops or []
+        self.geometry: list[list[float]] | None = None
 
     @property
     def distance_km(self) -> float:
@@ -277,7 +282,7 @@ class Route:
             "service_min": self.service_minutes,
             "wait_min": self.wait_minutes,
             "finish_at": at(day, self.finish) if self.finish else None,
-            "geometry": None,
+            "geometry": self.geometry,
         }
 
     def __repr__(self):

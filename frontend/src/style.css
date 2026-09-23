@@ -172,10 +172,15 @@
   border-radius: 6px !important;
 }
 
-.bar {
-  height: 3px;
-  overflow: hidden;
-  background: rgb(255 204 0 / 0.2);
+.leaflet-control-attribution {
+  font-size: 9px;
+  opacity: 0.45;
+  background: rgb(255 255 255 / 0.7) !important;
+  padding: 0 4px;
+}
+
+.leaflet-control-attribution:hover {
+  opacity: 1;
 }
 
 .loader-overlay {

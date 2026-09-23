@@ -5,6 +5,7 @@ from time import sleep
 
 from ..helpers.cache import LegCache
 from ..helpers.estimator import OVERHEAD_MIN, REASONS, estimate
+from ..helpers.geometry import leg_points, thin
 from ..models.domain import Engeneer, Plan, Point, Route, Stop, Ticket, TransportType, Unassigned
 from .improve import improve
 from .improve import schedule as replay
@@ -74,7 +75,10 @@ class GreedySolver(Solver):
         if self.polish:
             routes, unassigned, polish = self._polish(routes, unassigned, engeneers)
 
-        logger.info(f"Api calls: {self.api_calls}, from cache: {self.cache_taken}")
+        if self.use_api:
+            for route in routes.values():
+                route.geometry = self._geometry(route.engeneer, route.stops)
+
         return Plan(
             routes=list(routes.values()),
             unassigned=unassigned,
@@ -95,7 +99,13 @@ class GreedySolver(Solver):
         """
         order = {e.id: [s.ticket for s in routes[e.id].stops] for e in engeneers}
         why = {u.ticket.id: (u.reason, u.reason_text) for u in unassigned}
-        order, dropped, stats = improve(order, [u.ticket for u in unassigned], engeneers, estimate)
+        order, dropped, stats = improve(
+            order, [u.ticket for u in unassigned], engeneers, estimate, self.max_leg_min
+        )
+
+        stats["broken"] = sum(
+            1 for eng in engeneers if replay(eng, order[eng.id], estimate, self.max_leg_min) is None
+        )
 
         rough = 0
         for eng in engeneers:
@@ -148,9 +158,8 @@ class GreedySolver(Solver):
         for _score, _km, eng in candidates[:3]:
             depart = free_at[eng.id]
             minutes, km = self._road(position[eng.id], ticket.point, eng.transport, depart)
-            logger.debug(
-                f"Eng: {eng.name}, Minutes: {minutes}, KM: {km}, (_km: {_km}, score: {_score})"
-            )
+            if minutes > self.max_leg_min:
+                continue
             fit = self._fit(ticket, eng, depart, minutes)
             if fit is None:
                 continue
@@ -176,17 +185,31 @@ class GreedySolver(Solver):
             return None
         return arrive, start, end
 
+    def _when(self, depart: int) -> datetime | None:
+        if not self.work_date:
+            return None
+        return self.work_date.replace(
+            hour=min(23, depart // 60), minute=depart % 60, second=0, microsecond=0
+        )
+
+    def _geometry(self, eng: Engeneer, stops: list[Stop]) -> list[list[float]] | None:
+        where, points = eng.start_point, []
+        for stop in stops:
+            to = stop.ticket.point
+            leg = leg_points(
+                self.cache.raw(eng.transport, where.coords, to.coords, self._when(stop.depart))
+            )
+            points += leg or [[where.latitude, where.longitude], [to.latitude, to.longitude]]
+            where = to
+        return thin(points) or None
+
     def _road(self, a: Point, b: Point, transport: TransportType, depart: int) -> tuple[int, float]:
         if not self.use_api:
             return estimate(a, b, transport, depart)
 
         from ..twogis.client import car_route, pedestrian_route
 
-        when = None
-        if self.work_date:
-            when = self.work_date.replace(
-                hour=min(23, depart // 60), minute=depart % 60, second=0, microsecond=0
-            )
+        when = self._when(depart)
 
         cached = self.cache.get(transport, a.coords, b.coords, when)
         #         logger.debug(cached)
@@ -197,13 +220,14 @@ class GreedySolver(Solver):
         try:
             self.api_calls += 1
             fn = car_route if transport == TransportType.CAR else pedestrian_route
-            sleep(0.2)
+            sleep(3)
             leg = fn(a.coords, b.coords, when)
         except Exception:
             logger.warning(
                 "Ошибка построения маршрута 2ГИС, используется оценка расстояния",
                 exc_info=True,
             )
+            #             exit()
             return estimate(a, b, transport, depart)
 
         self.cache.put(transport, a.coords, b.coords, when, leg.minutes, leg.km, leg.raw)

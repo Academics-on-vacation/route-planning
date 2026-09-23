@@ -31,6 +31,7 @@ jobs:
           --health-retries 10
     env:
       RUN_MIGRATION_TESTS: '1'
+      RUN_IMPORT_TESTS: '1'
       DB_HOST: localhost
       DB_PORT: '5432'
       DB_NAME: route_planning_test
@@ -46,6 +47,7 @@ jobs:
           version: '0.11.25'
           enable-cache: true
       - run: make install
+      - run: make migrate
       - run: make check
 
   frontend:

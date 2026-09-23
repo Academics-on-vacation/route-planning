@@ -3,6 +3,7 @@ import { onBeforeUnmount, onMounted, ref, watch } from "vue";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
+import { MaptilerLayer } from "@maptiler/leaflet-maptilersdk";
 import {
   colorOfEngineer,
   focusEngineer,
@@ -21,6 +22,10 @@ import {
 } from "../store.js";
 import { hhmm } from "../time.js";
 
+const MAPTILER_KEY =
+  import.meta.env.VITE_MAPTILER_KEY || "BOcuCBryrZXZ49qwmbE2";
+const MAP_STYLE = "dataviz-light";
+
 const el = ref(null);
 
 let map = null;
@@ -33,10 +38,15 @@ const UNASSIGNED = "#99271f";
 const INK = "#14161a";
 
 onMounted(() => {
-  map = L.map(el.value, { preferCanvas: true }).setView([55.7, 37.7], 10);
-  // L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+  map = L.map(el.value, {
+    preferCanvas: true,
+    attributionControl: true,
+  }).setView([55.7, 37.7], 10);
+
+  new MaptilerLayer({ apiKey: MAPTILER_KEY, style: MAP_STYLE }).addTo(map);
+
   layer = L.layerGroup().addTo(map);
+
   // Клик по пустому месту снимает выделение — привычный жест.
   map.on("click", () => select(null));
 
@@ -175,7 +185,7 @@ function redraw() {
 
     lines.set(
       String(route.engineer_id),
-      L.polyline(route.geometry ?? path, { color, weight: 3, opacity: 0.75 })
+      L.polyline(route.geometry ?? path, { color, weight: 5, opacity: 0.75 })
         // Клик по линии = клик по имени инженера в списке.
         .on("click", (e) => {
           L.DomEvent.stop(e);

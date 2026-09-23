@@ -182,7 +182,13 @@ export async function loadRegion(id) {
 
     // Дальше считает солвер — самая долгая часть загрузки.
     state.stage = "plan";
-    const fresh = await api.plan(id);
+    let options = {};
+    console.log(localStorage.getItem("api"));
+    if (localStorage.getItem("api")) {
+      options["use_api"] = true;
+    }
+    console.log("opts:", options);
+    const fresh = await api.plan(id, options);
     if (mine !== token) return;
     plan.value = fresh;
     // Ориентир для полосы прогресса на следующий раз.
