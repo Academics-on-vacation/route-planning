@@ -50,7 +50,7 @@ def car_route(origin, destination, departure: datetime | None = None) -> Leg:
         "transport": "driving",
         "route_mode": "fastest",
         "traffic_mode": "statistics" if departure else "jam",
-        "output": "summary",
+        "output": "detailed",
     }
     if departure:
         body["utc"] = int(departure.timestamp())
@@ -59,10 +59,13 @@ def car_route(origin, destination, departure: datetime | None = None) -> Leg:
     if not result:
         raise RuntimeError("2ГИС: маршрут на машине не построен")
 
-    # Внимание: при output='summary' поля называются duration и length,
-    # а total_duration и total_distance бывают только у 'detailed'.
-    # Читать только total_* — значит молча получать нули.
-    return Leg(round(result[0]["duration"] / 60), result[0]["length"] / 1000, result[0])
+    #     print("Car route")
+    #     print(result)
+    #     print()
+    route = result[0]
+    seconds = route.get("total_duration", route.get("duration")) or 0
+    meters = route.get("total_distance", route.get("length")) or 0
+    return Leg(round(seconds / 60), meters / 1000, route)
 
 
 def pedestrian_route(origin, destination, departure: datetime | None = None) -> Leg:
@@ -82,6 +85,11 @@ def pedestrian_route(origin, destination, departure: datetime | None = None) -> 
         raise RuntimeError("2ГИС: маршрут на транспорте не построен")
 
     best = min(variants, key=lambda v: v["total_duration"])
+
+    print("Car route")
+    print(variants)
+    print()
+
     return Leg(round(best["total_duration"] / 60), best["total_distance"] / 1000, best)
 
 

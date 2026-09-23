@@ -27,6 +27,10 @@ def leg_key(transport, origin, destination, when: datetime) -> tuple:
 class LegCache:
     def __init__(self, rows=()):
         self._legs: dict[tuple, tuple[int, float]] = {}
+        # Ответы 2ГИС целиком: из них берётся нитка маршрута для карты.
+        # Хранятся отдельно от (минуты, км), потому что нужны только
+        # в самом конце и только у плеч итогового плана.
+        self._raw: dict[tuple, dict] = {}
         self._pending: list[dict] = []
         self.hits = 0
         self.misses = 0
@@ -39,6 +43,7 @@ class LegCache:
                 row.departure_at,
             )
             self._legs[key] = (row.minutes, row.km)
+            self._raw[key] = row.payload or {}
 
     def get(self, transport, origin, destination, when) -> tuple[int, float] | None:
         """Минуты и километры из кэша. None — надо спрашивать API."""
@@ -50,6 +55,13 @@ class LegCache:
             return None
         self.hits += 1
         return found
+
+    def raw(self, transport, origin, destination, when) -> dict:
+        """Ответ 2ГИС по этому плечу — как пришёл. Пусто, если плечо
+        считалось оценкой или строка кэша старая, без геометрии."""
+        if when is None:
+            return {}
+        return self._raw.get(leg_key(transport, origin, destination, when), {})
 
     def put(self, transport, origin, destination, when, minutes, km, payload) -> None:
         """Запомнить ответ API. Кладём его как есть, без накидок солвера"""
