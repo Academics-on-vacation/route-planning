@@ -4,13 +4,11 @@ from collections import Counter
 from datetime import date, datetime, time, timedelta
 
 from sqlalchemy import func, select
-from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.orm.engineer import Engineer
 from app.orm.region import Region
 from app.orm.request import Request
-from app.orm.route_cache import RouteCache
 from app.schemas import RequestCreate
 
 
@@ -82,24 +80,3 @@ def public_ids(rows: list[Request]) -> dict[int, str]:
         r.id: (r.external_id if seen[r.external_id] == 1 else f"{r.external_id}-{r.id}")
         for r in rows
     }
-
-
-async def load_leg_cache(session: AsyncSession, work_date: date) -> list[RouteCache]:
-    """Сохранённые плечи на этот день — все разом, перед запуском солвера."""
-    rows = await session.scalars(
-        select(RouteCache).where(
-            RouteCache.departure_at >= datetime.combine(work_date - timedelta(days=1), time.min),
-            RouteCache.departure_at < datetime.combine(work_date + timedelta(days=2), time.min),
-        )
-    )
-    return list(rows)
-
-
-async def save_leg_cache(session: AsyncSession, rows: list[dict]) -> int:
-    if not rows:
-        return 0
-    result = await session.execute(
-        pg_insert(RouteCache).values(rows).on_conflict_do_nothing(constraint="uq_route_cache_leg")
-    )
-    await session.commit()
-    return result.rowcount
