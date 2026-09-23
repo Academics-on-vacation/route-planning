@@ -11,6 +11,7 @@ from app.orm.engineer import Engineer
 from app.orm.region import Region
 from app.orm.request import Request
 from app.orm.route_cache import RouteCache
+from app.schemas import RequestCreate
 
 
 async def get_region(session: AsyncSession, region_id: int) -> Region | None:
@@ -49,6 +50,21 @@ async def list_engineers(session: AsyncSession, region_id: int) -> list[Engineer
         .order_by(Engineer.id)
     )
     return list(rows)
+
+
+async def request_exists(session: AsyncSession, region_id: int, external_id: str) -> bool:
+    found = await session.scalar(
+        select(Request.id).where(Request.region_id == region_id, Request.external_id == external_id)
+    )
+    return found is not None
+
+
+async def create_request(session: AsyncSession, region_id: int, data: RequestCreate) -> Request:
+    row = Request(region_id=region_id, **data.model_dump())
+    session.add(row)
+    await session.commit()
+    await session.refresh(row)
+    return row
 
 
 def public_ids(rows: list[Request]) -> dict[int, str]:

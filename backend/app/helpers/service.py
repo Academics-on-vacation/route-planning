@@ -5,8 +5,17 @@ from starlette.concurrency import run_in_threadpool
 
 from app.helpers import repository
 from app.helpers.cache import LegCache
-from app.models.domain import Engeneer, Region, Ticket
+from app.models.domain import Engeneer, Point, Region, Ticket
+from app.schemas import RequestCreate
 from app.solver.greedy import GreedySolver
+
+
+class DuplicateRequestError(Exception):
+
+
+    def __init__(self, external_id: str):
+        self.external_id = external_id
+        super().__init__(f"Заявка с external_id={external_id!r} уже существует в этом регионе")
 
 
 async def load_region(session: AsyncSession, region_id: int) -> Region | None:
@@ -14,10 +23,18 @@ async def load_region(session: AsyncSession, region_id: int) -> Region | None:
     return Region.from_row(row) if row else None
 
 
-async def load_tickets(session: AsyncSession, region_id: int, work_date: date) -> list[Ticket]:
+async def load_tickets(
+    session: AsyncSession, region_id: int, work_date: date, office: Point
+) -> list[Ticket]:
     rows = await repository.list_requests(session, region_id, work_date)
     ids = repository.public_ids(rows)
-    return [Ticket.from_row(r, ids[r.id]) for r in rows]
+    return [Ticket.from_row(r, ids[r.id], office) for r in rows]
+
+
+async def create_request(session: AsyncSession, region_id: int, payload: RequestCreate):
+    if await repository.request_exists(session, region_id, payload.external_id):
+        raise DuplicateRequestError(payload.external_id)
+    return await repository.create_request(session, region_id, payload)
 
 
 async def load_engineers(session: AsyncSession, region_id: int, office) -> list[Engeneer]:
@@ -35,7 +52,7 @@ async def build_plan(
     if work_date is None:
         return _empty(region.id, None, "в базе нет заявок для этого региона")
 
-    tickets = await load_tickets(session, region.id, work_date)
+    tickets = await load_tickets(session, region.id, work_date, region.office)
     engineers = await load_engineers(session, region.id, region.office)
     if not tickets:
         return _empty(region.id, work_date, "на эту дату заявок нет")

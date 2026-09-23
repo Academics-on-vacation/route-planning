@@ -41,8 +41,8 @@ class Request(Base):
 
     address: Mapped[str]
     district: Mapped[str | None] = mapped_column(String(128))
-    lat: Mapped[float] = mapped_column(Double)
-    lon: Mapped[float] = mapped_column(Double)
+    lat: Mapped[float | None] = mapped_column(Double)
+    lon: Mapped[float | None] = mapped_column(Double)
 
     work_type: Mapped[str] = mapped_column(String(48))
     hd_type: Mapped[str | None] = mapped_column(String(128))
