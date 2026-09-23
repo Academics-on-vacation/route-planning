@@ -17,6 +17,11 @@ services:
       retries: 10
     networks:
       - database
+    deploy:
+      resources:
+        limits:
+          memory: 128m
+          cpus: "0.1"
 
   migrate:
     build:
@@ -33,6 +38,11 @@ services:
         condition: service_healthy
     networks:
       - database
+    deploy:
+      resources:
+        limits:
+          memory: 128m
+          cpus: "0.5"
 
   backend:
     build:
@@ -53,6 +63,11 @@ services:
     networks:
       - database
       - backend
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "0.5"
 
   frontend:
     build:
@@ -69,6 +84,11 @@ services:
       - backend
     networks:
       - backend
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "0.5"
 
 volumes:
   postgres-data:
