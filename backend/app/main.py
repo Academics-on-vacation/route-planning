@@ -7,12 +7,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_session
 from app.helpers import repository, service
+from app.importing.router import router as import_router
 from app.logging_config import configure_logging
 from app.models.domain import Region
 
 configure_logging()
 
 app = FastAPI(title="Route Planning API", version="0.1.0")
+app.include_router(import_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://localhost:5174", "http://127.0.0.1:5173"],
