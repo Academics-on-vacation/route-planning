@@ -51,6 +51,7 @@ services:
     environment:
       <<: *database-environment
       YANDEX_GEOCODER_API_KEY: ${YANDEX_GEOCODER_API_KEY:-}
+      TWOGIS_API_KEY: ${TWOGIS_API_KEY:-}
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
     ports:
       - "127.0.0.1:8000:8000"
