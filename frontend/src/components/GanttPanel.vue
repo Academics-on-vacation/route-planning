@@ -133,7 +133,7 @@ const hatch = (engineerId) =>
             />
             <span
               v-if="band(stop.start_at, stop.end_at)"
-              class="absolute top-1.5 h-6 rounded-[4px] ring-2 ring-panel cursor-pointer"
+              class="absolute top-1.5 h-6 rounded-[4px] ring-2 ring-panel cursor-pointer z-1"
               :class="
                 isSelected(stop.request_id)
                   ? 'outline-2 outline-ink z-10'
