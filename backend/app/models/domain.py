@@ -89,7 +89,7 @@ class Region:
 class Ticket:
     def __init__(
         self,
-        id: str,
+        id: str | None,
         point: Point,
         duration_minutes: int,
         work_start: int,
@@ -245,7 +245,7 @@ class Stop:
     def to_json(self, day: date, seq: int) -> dict:
         return {
             "seq": seq,
-            "request_id": str(self.ticket.id),
+            "request_id": str(self.ticket.id) if self.ticket.id is not None else None,
             "arrive_at": at(day, self.arrive),
             "start_at": at(day, self.start),
             "end_at": at(day, self.end),
@@ -278,7 +278,7 @@ class Route:
 
     @property
     def service_minutes(self) -> int:
-        return sum(s.ticket.duration_minutes for s in self.stops)
+        return sum(s.ticket.duration_minutes for s in self.stops if s.ticket.id is not None)
 
     @property
     def wait_minutes(self) -> int:
@@ -343,7 +343,7 @@ class Plan:
 
     def metrics(self) -> dict:
         used = self.used_routes
-        stops = [s for r in used for s in r.stops]
+        stops = [s for r in used for s in r.stops if s.ticket.id is not None]
         return {
             "requests_total": len(stops) + len(self.unassigned),
             "assigned": len(stops),

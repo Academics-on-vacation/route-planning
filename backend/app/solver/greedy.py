@@ -6,7 +6,16 @@ from time import sleep
 from ..helpers.cache import LegCache
 from ..helpers.estimator import OVERHEAD_MIN, REASONS, estimate
 from ..helpers.geometry import leg_points, thin
-from ..models.domain import Engeneer, Plan, Point, Route, Stop, Ticket, TransportType, Unassigned
+from ..models.domain import (
+    Engeneer,
+    Plan,
+    Point,
+    Route,
+    Stop,
+    Ticket,
+    TransportType,
+    Unassigned,
+)
 from .improve import improve
 from .improve import schedule as replay
 from .interface import Solver
@@ -25,6 +34,11 @@ logger = logging.getLogger(__name__)
 
 # Потолок одного переезда.
 MAX_LEG_MIN = 90
+
+# Обеденный перерыв: длительность и целевое окно (минуты от полуночи).
+LUNCH_DURATION_MIN = 40
+LUNCH_WINDOW_START = 12 * 60  # 720
+LUNCH_WINDOW_END = 15 * 60  # 900
 
 
 class GreedySolver(Solver):
@@ -78,6 +92,8 @@ class GreedySolver(Solver):
         for route in routes.values():
             route.geometry = self._geometry(route.engeneer, route.stops)
 
+        lunch_missing = self._insert_lunch(routes)
+
         return Plan(
             routes=list(routes.values()),
             unassigned=unassigned,
@@ -88,6 +104,7 @@ class GreedySolver(Solver):
                 "cache_hits": self.cache_taken,
                 "max_leg_min": self.max_leg_min,
                 "polish": polish,
+                "lunch_missing": lunch_missing,
                 "runtime_ms": int((time.monotonic() - started) * 1000),
             },
         )
@@ -183,6 +200,82 @@ class GreedySolver(Solver):
         if end > eng.work_shift_end_minutes:  # не успевает до конца смены
             return None
         return arrive, start, end
+
+    def _insert_lunch(self, routes: dict[int, Route]) -> int:
+        """
+        Пытаемся впихнуть обед (LUNCH_DURATION_MIN) в уже посчитанный простой
+        маршрута, ориентировочно между LUNCH_WINDOW_START и LUNCH_WINDOW_END.
+
+        Обед — заявка-заглушка (Ticket.id is None), вставленная обычным Stop
+        внутрь простоя. Плечо (travel) до точки, где раньше начинался простой,
+        "переезжает" на обеденный Stop, а у соседнего реального визита
+        travel_minutes/travel_km обнуляются (он теперь стартует с той же точки,
+        где только что пообедали) — сумма travel/km по маршруту не меняется,
+        а start/end реальных визитов остаются побайтово теми же.
+
+        Возвращает количество маршрутов с визитами, куда обед не влез.
+        """
+        missing = 0
+        for route in routes.values():
+            eng = route.engeneer
+            stops = route.stops
+            if not stops:
+                continue  # пустой маршрут — обедать некому
+
+            # (индекс вставки, начало окна простоя, конец окна, точка)
+            windows: list[tuple[int, int, int, Point]] = []
+            for i, stop in enumerate(stops):
+                if stop.wait_minutes > 0:
+                    windows.append((i, stop.arrive, stop.start, stop.ticket.point))
+            last = stops[-1]
+            if eng.work_shift_end_minutes > last.end:
+                windows.append((len(stops), last.end, eng.work_shift_end_minutes, last.ticket.point))
+
+            candidates = [w for w in windows if w[2] - w[1] >= LUNCH_DURATION_MIN]
+            if not candidates:
+                missing += 1
+                continue
+
+            def score(window: tuple[int, int, int, Point]) -> tuple[int, int]:
+                _, start, end, _ = window
+                overlap = max(0, min(end, LUNCH_WINDOW_END) - max(start, LUNCH_WINDOW_START))
+                break_start = min(max(LUNCH_WINDOW_START, start), end - LUNCH_DURATION_MIN)
+                # больше перекрытие -> лучше; при равенстве -> более раннее окно
+                return (-overlap, break_start)
+
+            idx, win_start, win_end, point = min(candidates, key=score)
+            break_start = min(max(LUNCH_WINDOW_START, win_start), win_end - LUNCH_DURATION_MIN)
+            break_end = break_start + LUNCH_DURATION_MIN
+
+            lunch_ticket = Ticket(
+                id=None,
+                point=point,
+                duration_minutes=LUNCH_DURATION_MIN,
+                work_start=break_start,
+                work_finish=break_end,
+            )
+
+            if idx < len(stops):
+                neighbour = stops[idx]
+                lunch_stop = Stop(
+                    lunch_ticket,
+                    neighbour.depart,
+                    neighbour.arrive,
+                    break_start,
+                    break_end,
+                    neighbour.travel_minutes,
+                    neighbour.travel_km,
+                )
+                neighbour.depart = break_end
+                neighbour.arrive = break_end
+                neighbour.travel_minutes = 0
+                neighbour.travel_km = 0.0
+                stops.insert(idx, lunch_stop)
+            else:
+                lunch_stop = Stop(lunch_ticket, last.end, last.end, break_start, break_end, 0, 0.0)
+                stops.append(lunch_stop)
+
+        return missing
 
     def _when(self, depart: int) -> datetime | None:
         if not self.work_date:
