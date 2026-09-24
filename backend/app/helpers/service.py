@@ -59,7 +59,7 @@ async def build_plan(
     if not engineers:
         return _empty(region.id, work_date, "в регионе нет активных исполнителей")
 
-    cache = LegCache(await repository.load_leg_cache(session, work_date) if use_api else ())
+    cache = LegCache(await repository.load_leg_cache(session, work_date))
 
     solver = GreedySolver(
         work_date=datetime.combine(work_date, time.min), use_api=use_api, cache=cache

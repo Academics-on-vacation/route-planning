@@ -75,9 +75,8 @@ class GreedySolver(Solver):
         if self.polish:
             routes, unassigned, polish = self._polish(routes, unassigned, engeneers)
 
-        if self.use_api:
-            for route in routes.values():
-                route.geometry = self._geometry(route.engeneer, route.stops)
+        for route in routes.values():
+            route.geometry = self._geometry(route.engeneer, route.stops)
 
         return Plan(
             routes=list(routes.values()),
@@ -204,18 +203,17 @@ class GreedySolver(Solver):
         return thin(points) or None
 
     def _road(self, a: Point, b: Point, transport: TransportType, depart: int) -> tuple[int, float]:
+        when = self._when(depart)
+        cached = self.cache.get(transport, a.coords, b.coords, when)
+        if cached is not None:
+            self.cache_taken += 1
+            return cached[0] + OVERHEAD_MIN, round(cached[1], 2)
+
         if not self.use_api:
             return estimate(a, b, transport, depart)
 
         from ..twogis.client import car_route, pedestrian_route
 
-        when = self._when(depart)
-
-        cached = self.cache.get(transport, a.coords, b.coords, when)
-        #         logger.debug(cached)
-        if cached is not None:
-            self.cache_taken += 1
-            return cached[0] + OVERHEAD_MIN, round(cached[1], 2)
 
         try:
             self.api_calls += 1
