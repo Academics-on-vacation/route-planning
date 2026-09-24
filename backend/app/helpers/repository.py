@@ -50,6 +50,19 @@ async def list_engineers(session: AsyncSession, region_id: int) -> list[Engineer
     return list(rows)
 
 
+async def update_engineer_start_point(
+    session: AsyncSession, engineer_id: int, start_lat: float | None, start_lon: float | None
+) -> Engineer | None:
+    row = await session.get(Engineer, engineer_id)
+    if row is None:
+        return None
+    row.start_lat = start_lat
+    row.start_lon = start_lon
+    await session.commit()
+    await session.refresh(row)
+    return row
+
+
 async def soft_delete_request(session: AsyncSession, request_id: int) -> bool:
     row = await session.get(Request, request_id)
     if row is None:
