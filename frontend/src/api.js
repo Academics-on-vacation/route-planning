@@ -15,7 +15,6 @@ async function req(path, options) {
   }
   return res.json();
 }
-
 export const api = {
   regions: () => req("/regions"),
   requests: (id) => req(`/regions/${id}/requests`),
@@ -27,6 +26,20 @@ export const api = {
       method: "PATCH",
       body: JSON.stringify({ start_lat, start_lon }),
     }),
+
+  // Новая заявка (в том числе авария) в регионе.
+  createRequest: (regionId, body) =>
+    req(`/regions/${regionId}/requests`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  replan: (regionId, at, options = {}) =>
+    req("/plan/replan", {
+      method: "POST",
+      body: JSON.stringify({ region_id: regionId, at, options }),
+    }),
+
   plan: (id, options = {}) =>
     req("/plan", {
       method: "POST",

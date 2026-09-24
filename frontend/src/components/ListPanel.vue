@@ -4,9 +4,8 @@ import { RouterLink } from "vue-router";
 
 import TransportChip from "./TransportChip.vue";
 import {
-  routes,
-  state,
   colorOfEngineer,
+  engineerName,
   focusEngineer,
   hover,
   isDimmed,
@@ -14,7 +13,10 @@ import {
   isFocused,
   isHovered,
   isSelected,
+  movedAway,
+  routes,
   select,
+  state,
   transportOf,
   unassigned,
 } from "../store.js";
@@ -37,6 +39,7 @@ watch(
 
 const districtOf = (id) => state.requests[String(id)]?.district ?? "";
 const skillOf = (id) => state.requests[String(id)]?.skill ?? "";
+const isUrgent = (id) => (state.requests[String(id)]?.priority ?? 100) <= 10;
 </script>
 
 <template>
@@ -108,13 +111,15 @@ const skillOf = (id) => state.requests[String(id)]?.skill ?? "";
             :key="stop.request_id"
             :ref="(el) => registerNode(stop.request_id, el)"
             class="py-0.5 pr-2.5 -ml-2 pl-2 border-l-2 cursor-pointer transition-colors"
-            :class="
+            :class="[
+              stop.frozen ? 'opacity-55' : '',
               isSelected(stop.request_id)
                 ? 'border-ink bg-brand/25'
                 : isHovered(stop.request_id)
                   ? 'border-hair-2 bg-panel-2'
-                  : 'border-transparent hover:bg-panel-2'
-            "
+                  : 'border-transparent hover:bg-panel-2',
+            ]"
+            :title="stop.frozen ? 'Выполнено к моменту аварии' : undefined"
             @click="select(stop.request_id)"
             @mouseenter="hover(stop.request_id)"
             @mouseleave="hover(null)"
@@ -123,13 +128,16 @@ const skillOf = (id) => state.requests[String(id)]?.skill ?? "";
               {{ hhmm(stop.start_at) }}
             </span>
             <span
-              :class="
-                skillOf(stop.request_id) === 'emergency'
-                  ? 'num text-[12.5px] font-bold text-yellow-800'
-                  : 'num text-[12.5px] font-medium'
-              "
+              class="num text-[12.5px] font-medium"
+              :class="isUrgent(stop.request_id) ? 'text-crit' : ''"
               >{{ stop.request_id }}</span
             >
+            <span
+              v-if="isUrgent(stop.request_id)"
+              class="ml-1 px-1 rounded bg-crit text-white text-[9.5px] font-semibold uppercase tracking-wide align-[1px]"
+            >
+              авария
+            </span>
             <span class="ml-1 text-muted">{{
               districtOf(stop.request_id)
             }}</span>
@@ -141,8 +149,38 @@ const skillOf = (id) => state.requests[String(id)]?.skill ?? "";
             >
               · простой {{ stop.wait_min }} мин
             </span>
+            <!-- Заявка приехала от другой бригады при пересчёте по аварии. -->
+            <span
+              v-if="stop.moved_from"
+              class="block text-[10.5px] text-serious"
+              :title="`До аварии заявка стояла у: ${engineerName(stop.moved_from)}`"
+            >
+              ← от {{ engineerName(stop.moved_from) }}
+            </span>
           </li>
         </ol>
+
+        <div
+          v-if="movedAway[String(route.engineer_id)]?.length"
+          class="px-2.5 pb-1.5 -mt-0.5"
+        >
+          <p class="pl-5 text-[10px] uppercase tracking-wider text-muted">
+            передано другим
+          </p>
+          <ul>
+            <li
+              v-for="m in movedAway[String(route.engineer_id)]"
+              :key="m.request_id"
+              class="flex items-baseline gap-1.5 py-0.5 pl-5 text-[11px] text-muted cursor-pointer hover:text-ink"
+              @click="select(m.request_id)"
+              @mouseenter="hover(m.request_id)"
+              @mouseleave="hover(null)"
+            >
+              <span class="num line-through">{{ m.request_id }}</span>
+              <span class="truncate">→ {{ engineerName(m.to) }}</span>
+            </li>
+          </ul>
+        </div>
       </section>
 
       <section v-if="unassigned.length">

@@ -48,7 +48,14 @@ onMounted(() => {
   layer = L.layerGroup().addTo(map);
 
   // Клик по пустому месту снимает выделение — привычный жест.
-  map.on("click", () => select(null));
+  map.on("click", (e) => {
+    if (state.picking) {
+      state.picked = { lat: e.latlng.lat, lon: e.latlng.lng };
+      state.picking = false;
+      return;
+    }
+    select(null);
+  });
 
   document.querySelector(".leaflet-control-attribution").remove();
   redraw();
@@ -166,7 +173,16 @@ function redraw() {
       if (!req) continue;
       path.push([req.lat, req.lon]);
 
-      const marker = L.marker([req.lat, req.lon], { icon: pin(color, 12) })
+      const urgent = req.priority != null && req.priority <= 10;
+      const marker = L.marker([req.lat, req.lon], {
+        icon: pin(
+          color,
+          stop.frozen ? 10 : urgent ? 15 : 12,
+          stop.frozen ? "#b9b4a8" : urgent ? UNASSIGNED : null,
+        ),
+        opacity: stop.frozen ? 0.65 : 1,
+        zIndexOffset: urgent ? 600 : 0,
+      })
         .bindPopup(
           `<b>${req.id}</b><br>${req.district ?? ""}<br>окно ${hhmm(
             req.window_start,

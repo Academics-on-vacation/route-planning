@@ -1,6 +1,7 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 
+import EmergencyDialog from "../components/EmergencyDialog.vue";
 import GanttPanel from "../components/GanttPanel.vue";
 import ListPanel from "../components/ListPanel.vue";
 import MapView from "../components/MapView.vue";
@@ -10,6 +11,7 @@ import {
   SKILLS,
   clearSelection,
   loadRegion,
+  replanInfo,
   state,
   stopIndex,
   transportOf,
@@ -20,6 +22,8 @@ import { hhmm, toMinutes } from "../time.js";
 const props = defineProps({ regionId: { type: Number, required: true } });
 
 watch(() => props.regionId, loadRegion, { immediate: true });
+
+const emergencyOpen = ref(false);
 
 const onKey = (e) => {
   if (e.key === "Escape") clearSelection();
@@ -54,6 +58,44 @@ const slack = computed(() => {
 <template>
   <div class="relative flex-1 min-h-0 grid grid-cols-[336px_1fr] gap-2.5 p-2.5">
     <RouteLoader />
+
+    <EmergencyDialog :open="emergencyOpen" @close="emergencyOpen = false" />
+
+    <div
+      class="absolute top-4 right-4 z-[1100] flex flex-col items-end gap-1.5"
+    >
+      <button
+        class="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-crit text-white text-[12.5px] font-semibold shadow cursor-pointer hover:brightness-110 transition print:hidden"
+        @click="emergencyOpen = true"
+      >
+        <span
+          class="w-4 h-4 rounded-full bg-white/25 grid place-items-center text-[11px]"
+          aria-hidden="true"
+        >
+          !
+        </span>
+        Авария
+      </button>
+
+      <div
+        v-if="replanInfo"
+        class="panel px-2.5 py-2 w-[232px] text-[11.5px] leading-snug"
+      >
+        <div class="font-semibold text-[12px]">
+          Пересчёт с {{ replanInfo.frozen_at?.slice(11, 16) }}
+        </div>
+        <dl class="num mt-1 grid grid-cols-[1fr_auto] gap-x-2">
+          <dt class="text-muted">заморожено визитов</dt>
+          <dd>{{ replanInfo.frozen_stops }}</dd>
+          <dt class="text-muted">пересчитано</dt>
+          <dd>{{ replanInfo.replanned_stops }}</dd>
+          <dt class="text-muted">сменили бригаду</dt>
+          <dd :class="replanInfo.moved > 0 ? 'text-serious' : ''">
+            {{ replanInfo.moved }}
+          </dd>
+        </dl>
+      </div>
+    </div>
 
     <div class="panel flex flex-col min-h-0">
       <ListPanel class="flex-1 min-h-0" />

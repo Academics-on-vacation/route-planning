@@ -211,7 +211,18 @@ class Engeneer:
 
 
 class Stop:
-    def __init__(self, ticket, depart, arrive, start, end, travel_minutes, travel_km):
+    def __init__(
+        self,
+        ticket,
+        depart,
+        arrive,
+        start,
+        end,
+        travel_minutes,
+        travel_km,
+        frozen=False,
+        moved_from=None,
+    ):
         self.ticket: Ticket = ticket
         self.depart = depart
         self.arrive = arrive
@@ -219,6 +230,8 @@ class Stop:
         self.end = end
         self.travel_minutes = travel_minutes
         self.travel_km = travel_km
+        self.frozen = frozen
+        self.moved_from = moved_from
 
     @property
     def wait_minutes(self) -> int:
@@ -239,6 +252,8 @@ class Stop:
             "wait_min": self.wait_minutes,
             "travel_min": self.travel_minutes,
             "travel_km": self.travel_km,
+            "frozen": self.frozen,
+            "moved_from": self.moved_from,
         }
 
     def __repr__(self):

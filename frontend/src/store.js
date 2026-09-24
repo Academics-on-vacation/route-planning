@@ -1,6 +1,7 @@
 import { computed, reactive, shallowRef } from "vue";
 
 import { api } from "./api.js";
+import { toMinutes } from "./time.js";
 
 const key = (id) => String(id);
 
@@ -39,6 +40,8 @@ export const state = reactive({
   focused: null,
   loading: false,
   error: null,
+  picking: false,
+  picked: null,
 });
 
 export const plan = shallowRef(null);
@@ -83,6 +86,29 @@ export const unassignedIndex = computed(() => {
 
 export const metrics = computed(() => plan.value?.metrics ?? null);
 
+/** Сводка перепланирования, если текущий план получен по аварии. */
+export const replanInfo = computed(() => plan.value?.meta?.replan ?? null);
+
+/** Момент заморозки в минутах от полуночи — по нему Гант рисует черту. */
+export const frozenAt = computed(() => toMinutes(replanInfo.value?.frozen_at));
+
+/**
+ * Заявки, ушедшие от инженера к другому: {id бригады: [{request_id, to}]}.
+ */
+export const movedAway = computed(() => {
+  const map = {};
+  for (const m of replanInfo.value?.moves ?? []) {
+    (map[key(m.from)] ??= []).push(m);
+  }
+  return map;
+});
+
+/** Имя инженера по id — для подписей «от кого» и «к кому». */
+export const engineerName = (id) =>
+  state.engineers[key(id)]?.name ?? `Инженер ${id}`;
+
+/** Чем ездит инженер: car / transit / bike / foot. Берём из справочника
+ *  исполнителей — в маршруте плана этого поля нет. */
 export const transportOf = (engineerId) =>
   engineerId == null
     ? null
@@ -200,6 +226,7 @@ export async function loadRegion(id) {
     if (mine === token) {
       state.loading = false;
       state.pendingRegionId = null;
+      state.stage = null;
     }
   }
 }
@@ -222,6 +249,36 @@ export async function rebuild(options = {}) {
   } catch (e) {
     if (mine !== token) return;
     state.error = String(e.message ?? e);
+  } finally {
+    if (mine === token) {
+      state.loading = false;
+      state.stage = null;
+    }
+  }
+}
+
+/**
+ * Перепланировать день с момента аварии.
+ */
+export async function replan(at, options = {}) {
+  const mine = ++token;
+  const id = state.regionId;
+  const startedAt = Date.now();
+  state.loading = true;
+  state.loadingSince = startedAt;
+  state.stage = "plan";
+  state.error = null;
+  try {
+    const fresh = await api.replan(id, at, options);
+    if (mine !== token) return;
+    state.requests = indexById(await api.requests(id));
+    if (mine !== token) return;
+    plan.value = fresh;
+    state.lastLoadMs = Date.now() - startedAt;
+  } catch (e) {
+    if (mine !== token) return;
+    state.error = String(e.message ?? e);
+    throw e;
   } finally {
     if (mine === token) {
       state.loading = false;

@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 
 from fastapi import Body, Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -81,6 +81,42 @@ async def create_request(
     except service.DuplicateRequestError as error:
         raise HTTPException(409, str(error)) from error
     return request_to_json(row)
+
+
+@app.post("/api/plan/replan")
+async def post_replan(
+    body: dict = Body(default_factory=dict),
+    session: AsyncSession = Depends(get_session),
+) -> dict:
+    """Тело: {region_id, at, work_date?, options: {use_api}}.
+
+    `at` — момент аварии. Приходит параметром, а не берётся из часов
+    сервера: иначе один и тот же сценарий ведёт себя по-разному в
+    зависимости от того, когда его запускают.
+    """
+    raw_at = body.get("at")
+    if not raw_at:
+        raise HTTPException(422, "нужно передать момент перепланирования `at`")
+    try:
+        at = datetime.fromisoformat(raw_at).replace(tzinfo=None)
+    except ValueError:
+        raise HTTPException(422, f"не разобрал время {raw_at!r}") from None
+
+    raw_date = body.get("work_date")
+    options = body.get("options") or {}
+    region = await _region(session, int(body.get("region_id", 1)))
+    try:
+        return await service.replan(
+            session,
+            region,
+            at=at,
+            work_date=date.fromisoformat(raw_date) if raw_date else None,
+            use_api=bool(options.get("use_api", False)),
+        )
+    except service.NoActivePlanError:
+        raise HTTPException(
+            409, "на эту дату нет действующего плана — сначала рассчитайте день"
+        ) from None
 
 
 @app.get("/api/engineers")

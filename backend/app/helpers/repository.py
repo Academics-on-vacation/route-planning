@@ -6,6 +6,7 @@ from datetime import date, datetime, time, timedelta
 from sqlalchemy import func, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.orm.engineer import Engineer
 from app.orm.plan import Plan as PlanRow
@@ -184,11 +185,13 @@ async def save_plan(session: AsyncSession, region_id: int, work_date: date, plan
 
 
 async def active_plan(session: AsyncSession, region_id: int, work_date: date) -> PlanRow | None:
-    """Действующий план на день — основа для перепланирования."""
+    """Действующий план на день — основа для перепланирования"""
     return await session.scalar(
-        select(PlanRow).where(
+        select(PlanRow)
+        .where(
             PlanRow.region_id == region_id,
             PlanRow.work_date == work_date,
             PlanRow.is_active.is_(True),
         )
+        .options(selectinload(PlanRow.routes).selectinload(RouteRow.stops))
     )

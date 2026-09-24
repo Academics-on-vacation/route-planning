@@ -4,6 +4,7 @@ import { computed } from "vue";
 import {
   colorOfEngineer,
   focusEngineer,
+  frozenAt,
   hover,
   isActive,
   isDimmed,
@@ -65,6 +66,11 @@ const color = (engineerId) => colorOfEngineer.value[String(engineerId)];
 
 const hatch = (engineerId) =>
   `repeating-linear-gradient(135deg, ${color(engineerId)} 0 2px, transparent 2px 5px)`;
+
+// Черта момента аварии: слева от неё день уже прожит и не пересчитывался.
+const frozenLeft = computed(() =>
+  frozenAt.value == null ? null : `${pct(frozenAt.value)}%`,
+);
 </script>
 
 <template>
@@ -78,6 +84,11 @@ const hatch = (engineerId) =>
         Расписание
       </div>
       <div class="relative flex-1 h-4">
+        <span
+          v-if="frozenLeft"
+          class="absolute inset-y-0 w-px bg-crit"
+          :style="{ left: frozenLeft }"
+        />
         <small
           v-for="h in hours"
           :key="h"
@@ -115,6 +126,12 @@ const hatch = (engineerId) =>
             class="absolute inset-y-0 w-px bg-hair"
             :style="{ left: `${pct(h)}%` }"
           />
+          <span
+            v-if="frozenLeft"
+            class="absolute inset-y-0 w-px bg-crit/70 z-10"
+            :style="{ left: frozenLeft }"
+            title="Момент аварии: слева день уже прожит"
+          />
 
           <template v-for="stop in route.stops" :key="stop.request_id">
             <span
@@ -133,19 +150,22 @@ const hatch = (engineerId) =>
             />
             <span
               v-if="band(stop.start_at, stop.end_at)"
-              class="absolute top-1.5 h-6 rounded-[4px] ring-2 ring-panel cursor-pointer z-1"
-              :class="
+              class="absolute top-1.5 h-6 rounded-[4px] ring-2 ring-panel cursor-pointer z-20"
+              :class="[
+                stop.frozen ? 'opacity-40' : '',
                 isSelected(stop.request_id)
                   ? 'outline-2 outline-ink z-10'
                   : isActive(stop.request_id)
                     ? 'outline-2 outline-ink/40 z-10'
-                    : ''
-              "
+                    : '',
+              ]"
               :style="{
                 ...band(stop.start_at, stop.end_at),
                 background: color(route.engineer_id),
               }"
-              :title="`${stop.request_id}: ${hhmm(stop.start_at)}–${hhmm(stop.end_at)}`"
+              :title="`${stop.request_id}: ${hhmm(stop.start_at)}–${hhmm(stop.end_at)}${
+                stop.frozen ? ' (выполнено к моменту аварии)' : ''
+              }`"
               @click="select(stop.request_id)"
               @mouseenter="hover(stop.request_id)"
               @mouseleave="hover(null)"
