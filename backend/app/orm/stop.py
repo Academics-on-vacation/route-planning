@@ -19,7 +19,7 @@ class Stop(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     route_id: Mapped[int] = mapped_column(ForeignKey("route.id", ondelete="CASCADE"))
-    request_id: Mapped[int] = mapped_column(ForeignKey("request.id"))
+    request_id: Mapped[int] = mapped_column(ForeignKey("request.id", ondelete="CASCADE"))
 
     seq: Mapped[int] = mapped_column(SmallInteger)
 
