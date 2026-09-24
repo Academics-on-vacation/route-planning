@@ -10,7 +10,7 @@ from app.helpers import repository, service
 from app.importing.router import router as import_router
 from app.logging_config import configure_logging
 from app.models.domain import Region
-from app.schemas import RequestCreate, request_to_json
+from app.schemas import EngineerStartPointUpdate, RequestCreate, engineer_to_json, request_to_json
 
 configure_logging()
 
@@ -81,6 +81,22 @@ async def create_request(
     except service.DuplicateRequestError as error:
         raise HTTPException(409, str(error)) from error
     return request_to_json(row)
+
+
+@app.patch("/api/engineers/{engineer_id}")
+async def patch_engineer(
+    engineer_id: int,
+    payload: EngineerStartPointUpdate,
+    session: AsyncSession = Depends(get_session),
+) -> dict:
+    """Задать/сбросить точку старта инженера. start_lat/start_lon оба null —
+    инженер снова стартует из офиса региона"""
+    row = await repository.update_engineer_start_point(
+        session, engineer_id, payload.start_lat, payload.start_lon
+    )
+    if row is None:
+        raise HTTPException(404, f"Инженера {engineer_id} нет")
+    return engineer_to_json(row)
 
 
 @app.delete("/api/requests/{request_id}", status_code=204)

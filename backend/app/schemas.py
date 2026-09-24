@@ -2,6 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
+from app.orm.engineer import Engineer
 from app.orm.request import Request
 from app.orm.required_transport import RequiredTransport
 from app.orm.skill import Skill
@@ -47,6 +48,35 @@ class RequestCreate(BaseModel):
         if (self.lat is None) != (self.lon is None):
             raise ValueError("lat и lon нужно передавать вместе, либо не передавать вовсе")
         return self
+
+
+class EngineerStartPointUpdate(BaseModel):
+    """Тело PATCH /api/engineers/{engineer_id}. Меняет только точку старта."""
+
+    start_lat: float | None = None
+    start_lon: float | None = None
+
+    @model_validator(mode="after")
+    def _check_coords_pair(self) -> "EngineerStartPointUpdate":
+        if (self.start_lat is None) != (self.start_lon is None):
+            raise ValueError("start_lat и start_lon нужно передавать вместе, либо оба null")
+        return self
+
+
+def engineer_to_json(row: Engineer) -> dict:
+    """Полная сериализация инженера для ручек управления (без привязки к дню)."""
+    return {
+        "id": row.id,
+        "region_id": row.region_id,
+        "name": row.name,
+        "transport": row.transport.value if hasattr(row.transport, "value") else row.transport,
+        "skills": row.skills,
+        "shift_start": row.shift_start.isoformat(),
+        "shift_end": row.shift_end.isoformat(),
+        "start_lat": row.start_lat,
+        "start_lon": row.start_lon,
+        "is_active": row.is_active,
+    }
 
 
 def request_to_json(row: Request) -> dict:
