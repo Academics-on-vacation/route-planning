@@ -98,6 +98,7 @@ def _minutes(moment: datetime, day: date) -> int:
 def _freeze(eng: Engeneer, at_minutes: int, last: Stop | None) -> Engeneer:
     """Инженер на момент аварии: где стоит и когда освободится."""
     clone = copy.copy(eng)
+    clone.deployed = last is not None
     if last is not None:
         clone.start_point = last.ticket.point
         clone.work_shift_start_minutes = max(at_minutes, last.end)
@@ -209,3 +210,92 @@ async def replan(
         plan.meta["plan_id"] = await repository.save_plan(session, region.id, work_date, plan)
 
     return plan.to_json(region.id, work_date)
+
+
+
+def _stored_json(snapshot, region_id: int, work_date: date, public: dict, engineers) -> dict:
+    replan_meta = (snapshot.meta or {}).get("replan") or {}
+    frozen_at = replan_meta.get("frozen_at")
+    came_from = {m["request_id"]: m["from"] for m in replan_meta.get("moves", [])}
+    by_id = {e.id: e for e in engineers}
+
+    routes = []
+    for row in sorted(snapshot.routes, key=lambda r: r.engineer_id):
+        eng = by_id.get(row.engineer_id)
+        if eng is None or not row.stops:
+            # Инженера выключили после расчёта — маршрут показывать не на чем.
+            continue
+        stops = []
+        for st in row.stops:
+            request_id = public.get(st.request_id, str(st.request_id))
+            stops.append(
+                {
+                    "seq": st.seq,
+                    "request_id": request_id,
+                    "arrive_at": st.arrive_at.isoformat(),
+                    "start_at": st.start_at.isoformat(),
+                    "end_at": st.end_at.isoformat(),
+                    "wait_min": int((st.start_at - st.arrive_at).total_seconds() // 60),
+                    "travel_min": st.travel_min,
+                    "travel_km": st.travel_km,
+                    "frozen": bool(frozen_at and st.start_at.isoformat() < frozen_at),
+                    "moved_from": came_from.get(request_id),
+                }
+            )
+        routes.append(
+            {
+                "engineer_id": row.engineer_id,
+                "engineer_name": eng.name,
+                "start": {
+                    "lat": eng.start_point.latitude,
+                    "lon": eng.start_point.longitude,
+                    "at": at(work_date, eng.work_shift_start_minutes),
+                },
+                "stops": stops,
+                "distance_km": round(row.distance_km, 1),
+                "travel_min": row.travel_min,
+                "service_min": row.service_min,
+                "wait_min": row.wait_min,
+                "finish_at": stops[-1]["end_at"],
+                "geometry": row.geometry,
+            }
+        )
+
+    return {
+        "region_id": region_id,
+        "work_date": work_date.isoformat(),
+        "routes": routes,
+        "unassigned": (snapshot.meta or {}).get("unassigned", []),
+        "metrics": snapshot.metrics or {},
+        "meta": {
+            **(snapshot.meta or {}),
+            "stored": True,
+            "plan_id": snapshot.id,
+            "created_at": snapshot.created_at.isoformat(timespec="seconds"),
+        },
+    }
+
+
+async def stored_plan(
+    session: AsyncSession, region: Region, work_date: date | None = None
+) -> dict:
+    """Действующий план из базы. Солвер не запускается.
+
+    Плана нет — отдаём пустой каркас с meta.stored = false: фронту этого
+    достаточно, чтобы предложить рассчитать день, и это не ошибка.
+    """
+    work_date = work_date or await repository.first_work_date(session, region.id)
+    if work_date is None:
+        return {**_empty(region.id, None, "в базе нет заявок для этого региона"), }
+
+    snapshot = await repository.active_plan(session, region.id, work_date)
+    if snapshot is None:
+        empty = _empty(region.id, work_date, "план ещё не рассчитан")
+        empty["meta"]["stored"] = False
+        return empty
+
+    rows = await repository.list_requests(session, region.id, work_date)
+    engineers = await load_engineers(session, region.id, region.office)
+    return _stored_json(
+        snapshot, region.id, work_date, repository.public_ids(rows), engineers
+    )

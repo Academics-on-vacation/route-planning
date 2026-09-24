@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 from collections.abc import Awaitable, Callable
 
 import requests
@@ -89,3 +90,81 @@ async def geocode_all_requests() -> None:
 if __name__ == "__main__":
     configure_logging()
     asyncio.run(geocode_all_requests())
+
+
+
+GEOCODER_URL = os.environ.get("GEOCODER_URL", "https://geocode-maps.yandex.ru/1.x/")
+
+
+class Suggestion(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    title: str
+    subtitle: str = ""
+    address: str
+    lat: float = Field(ge=-90, le=90)
+    lon: float = Field(ge=-180, le=180)
+
+
+def _parse(payload: dict) -> list[Suggestion]:
+    members = (
+        payload.get("response", {})
+        .get("GeoObjectCollection", {})
+        .get("featureMember", [])
+    )
+    out: list[Suggestion] = []
+    for member in members:
+        obj = member.get("GeoObject") or {}
+        pos = (obj.get("Point") or {}).get("pos")
+        if not pos:
+            continue
+        try:
+            lon, lat = (float(x) for x in pos.split())
+        except ValueError:
+            continue
+        meta = (obj.get("metaDataProperty") or {}).get("GeocoderMetaData") or {}
+        out.append(
+            Suggestion(
+                title=obj.get("name") or meta.get("text", ""),
+                subtitle=obj.get("description", ""),
+                address=meta.get("text", "") or obj.get("name", ""),
+                lat=lat,
+                lon=lon,
+            )
+        )
+    return out
+
+
+async def suggest_addresses(
+    query: str, api_key: str | None, around: tuple[float, float] | None = None, limit: int = 5
+) -> list[Suggestion]:
+    query = (query or "").strip()
+    if len(query) < 3:
+        return []
+    if not api_key:
+        raise GeocodingError("Подсказки недоступны: не задан YANDEX_GEOCODER_API_KEY")
+
+    params = {
+        "apikey": api_key,
+        "geocode": query,
+        "format": "json",
+        "results": limit,
+        "lang": "ru_RU",
+    }
+    if around:
+        lat, lon = around
+        params["ll"] = f"{lon},{lat}"
+        params["spn"] = "0.9,0.6"
+        params["rspn"] = 0
+
+    def fetch() -> dict:
+        response = requests.get(GEOCODER_URL, params=params, timeout=8)
+        response.raise_for_status()
+        return response.json()
+
+    try:
+        payload = await run_in_threadpool(fetch)
+    except (requests.RequestException, ValueError):
+        raise GeocodingError("Геокодер не ответил") from None
+
+    return _parse(payload)

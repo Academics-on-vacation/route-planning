@@ -178,6 +178,7 @@ class Engeneer:
         self.work_shift_end_minutes = work_shift_end_minutes
         self.skills = skills
         self.transport = transport
+        self.deployed = False
 
     @classmethod
     def from_row(cls, row, office: Point) -> "Engeneer":

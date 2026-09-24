@@ -108,14 +108,20 @@ class GreedySolver(Solver):
 
         rough = 0
         for eng in engeneers:
-            got = replay(eng, order[eng.id], self._road) if self.use_api else None
+            got = replay(eng, order[eng.id], self._road)
             if got is None:
                 got = replay(eng, order[eng.id], estimate)
-                rough += 1 if self.use_api else 0
-            routes[eng.id].stops = got[0] if got else []
+                rough += 1
+            if got is None:
+                logger.warning("Маршрут %s не проигрался, заявки в отказ", eng.id)
+                dropped += order[eng.id]
+                got = ([], 0.0)
+            routes[eng.id].stops = got[0]
 
         stats["rough_routes"] = rough
-        return routes, [Unassigned(t, *why[t.id]) for t in dropped], stats
+        stats["lost_routes"] = sum(1 for e in engeneers if order[e.id] and not routes[e.id].stops)
+        fallback = ("window", REASONS["window"])
+        return routes, [Unassigned(t, *why.get(t.id, fallback)) for t in dropped], stats
 
     def _place(self, ticket, engeneers, routes, position, free_at) -> str | None:
         """Пристроить заявку. Возвращает код причины, если не вышло."""
@@ -191,6 +197,34 @@ class GreedySolver(Solver):
             hour=min(23, depart // 60), minute=depart % 60, second=0, microsecond=0
         )
 
+    def _raw(self, a: Point, b: Point, transport: TransportType, depart: int) -> dict:
+        """Ответ 2ГИС по плечу целиком — из кэша, иначе из сети.
+
+        Геометрии в кэше может не быть у плеча, которое считалось оценкой
+        или писалось старым кодом без maneuvers. Тогда есть смысл спросить
+        ручку: минуты и километры у нас уже есть, но нитка по дорогам
+        берётся только отсюда.
+        """
+        when = self._when(depart)
+        raw = self.cache.raw(transport, a.coords, b.coords, when)
+        if raw or not self.use_api:
+            return raw
+
+        from ..twogis.client import car_route, pedestrian_route
+
+        print("Нет в кэше - иду в API")
+        try:
+            self.api_calls += 1
+            fn = car_route if transport == TransportType.CAR else pedestrian_route
+            sleep(3)
+            leg = fn(a.coords, b.coords, when)
+        except Exception:
+            logger.warning("Не удалось получить геометрию плеча", exc_info=True)
+            return {}
+
+        self.cache.put(transport, a.coords, b.coords, when, leg.minutes, leg.km, leg.raw)
+        return leg.raw
+
     def _geometry(self, eng: Engeneer, stops: list[Stop]) -> list[list[float]] | None:
         where, points = eng.start_point, []
         for stop in stops:
@@ -206,9 +240,11 @@ class GreedySolver(Solver):
         when = self._when(depart)
         cached = self.cache.get(transport, a.coords, b.coords, when)
         if cached is not None:
+            print("Из кэша")
             self.cache_taken += 1
             return cached[0] + OVERHEAD_MIN, round(cached[1], 2)
 
+        print("______Нет в кэше_____")
         if not self.use_api:
             return estimate(a, b, transport, depart)
 

@@ -45,4 +45,8 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ region_id: id, options }),
     }),
+
+    geocode: (q, regionId) =>
+        req(`/geocode?q=${encodeURIComponent(q)}&region_id=${regionId}`),
+
 };

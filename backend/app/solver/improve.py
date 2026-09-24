@@ -73,6 +73,10 @@ def improve(
     order = dict(plan_tickets)
     dropped = list(dropped)
 
+    def opening(eng_id: int) -> float:
+        """Сколько стоит поднять бригаду """
+        return 0.0 if by_id[eng_id].deployed else W_ENGINEER
+
     # Кэш цен маршрутов: за один проход один и тот же маршрут пересчитывается десятки раз.
     cache: dict[tuple, float | None] = {}
 
@@ -88,7 +92,7 @@ def improve(
         return (
             sum(price(e, ts) or 0 for e, ts in plan.items())
             + W_DROP * sum(urgency(t) for t in unplaced)
-            + W_ENGINEER * sum(1 for ts in plan.values() if ts)
+            + sum(opening(e) for e, ts in plan.items() if ts)
         )
 
     def total() -> float:
@@ -112,7 +116,7 @@ def improve(
                     got = price(eng_id, candidate)
                     if got is None:
                         continue
-                    delta = got - base
+                    delta = got - base + (0 if tickets else opening(eng_id))
                     if best is None or delta < best[0]:
                         best = (delta, eng_id, candidate)
             # Заявка в плане всегда лучше заявки в отказе: W_DROP заведомо
@@ -139,7 +143,7 @@ def improve(
                 gain = now_cost - cut_cost
                 # Последний визит уходит — бригада вообще не выезжает
                 if not without:
-                    gain += W_ENGINEER
+                    gain += opening(src)
                 best = None
                 for dst, dst_tickets in order.items():
                     base = price(dst, without if dst == src else dst_tickets) or 0
@@ -154,7 +158,7 @@ def improve(
                         delta = got - base
                         # Поднимать ради одного визита ещё одну бригаду дорого
                         if dst != src and not pool:
-                            delta += W_ENGINEER
+                            delta += opening(dst)
                         if best is None or delta < best[0]:
                             best = (delta, dst, candidate)
                 if best and best[0] < gain - 1e-9:  # строго дешевле, чем было
@@ -208,7 +212,7 @@ def improve(
                         got = price(dst, candidate)
                         if got is None:
                             continue
-                        delta = got - base + (W_ENGINEER if not trial[dst] else 0)
+                        delta = got - base + (opening(dst) if not trial[dst] else 0)
                         if best is None or delta < best[0]:
                             best = (delta, dst, candidate)
                 if best is None:

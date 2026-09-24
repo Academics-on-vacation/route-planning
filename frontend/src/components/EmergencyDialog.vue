@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, watch } from "vue";
+import { computed, onBeforeUnmount, ref, watch } from "vue";
 
 import { api } from "../api.js";
 import { plan, replan, state } from "../store.js";
@@ -36,6 +36,9 @@ watch(
     }
     error.value = null;
     time.value = "14:00";
+    hints.value = [];
+    hintsOpen.value = false;
+    hintError.value = null;
   },
 );
 
@@ -90,7 +93,12 @@ async function submit() {
       priority: 10,
     });
     used.add(base);
-    await replan(at);
+    let options = {};
+    console.log(localStorage.getItem("api"));
+    if (localStorage.getItem("api")) {
+      options["use_api"] = true;
+    }
+    await replan(at, options);
     emit("close");
   } catch (e) {
     error.value = String(e.message ?? e);
@@ -102,6 +110,75 @@ async function submit() {
 function pickOnMap() {
   state.picking = true;
 }
+
+const hints = ref([]);
+const hintsOpen = ref(false);
+const hintIndex = ref(-1);
+const searching = ref(false);
+const hintError = ref(null);
+let timer = null;
+let hintToken = 0;
+
+function onAddressInput() {
+  clearTimeout(timer);
+  hintError.value = null;
+  const text = address.value.trim();
+  if (text.length < 3) {
+    hints.value = [];
+    hintsOpen.value = false;
+    return;
+  }
+  // Пауза, чтобы не дёргать геокодер на каждую букву.
+  timer = setTimeout(search, 350);
+}
+
+async function search() {
+  const mine = ++hintToken;
+  searching.value = true;
+  try {
+    const found = await api.geocode(address.value.trim(), state.regionId);
+    if (mine !== hintToken) return;
+    hints.value = found;
+    hintIndex.value = -1;
+    hintsOpen.value = found.length > 0;
+  } catch (e) {
+    if (mine !== hintToken) return;
+    // Нет ключа или геокодер молчит — не мешаем работать руками.
+    hints.value = [];
+    hintsOpen.value = false;
+    hintError.value = String(e.message ?? e).includes("503")
+      ? "подсказки недоступны — введите координаты вручную"
+      : "геокодер не ответил";
+  } finally {
+    if (mine === hintToken) searching.value = false;
+  }
+}
+
+function choose(hint) {
+  address.value = hint.address || hint.title;
+  coords.value = `${hint.lat.toFixed(6)}, ${hint.lon.toFixed(6)}`;
+  hintsOpen.value = false;
+  hints.value = [];
+}
+
+function onAddressKey(e) {
+  if (!hintsOpen.value || !hints.value.length) return;
+  if (e.key === "ArrowDown") {
+    e.preventDefault();
+    hintIndex.value = (hintIndex.value + 1) % hints.value.length;
+  } else if (e.key === "ArrowUp") {
+    e.preventDefault();
+    hintIndex.value =
+      (hintIndex.value - 1 + hints.value.length) % hints.value.length;
+  } else if (e.key === "Enter" && hintIndex.value >= 0) {
+    e.preventDefault();
+    choose(hints.value[hintIndex.value]);
+  } else if (e.key === "Escape") {
+    hintsOpen.value = false;
+  }
+}
+
+onBeforeUnmount(() => clearTimeout(timer));
 </script>
 
 <template>
@@ -127,7 +204,9 @@ function pickOnMap() {
     class="fixed inset-0 z-[1300] flex items-start justify-center pt-[9vh] bg-black/35 print:hidden"
     @click.self="emit('close')"
   >
-    <div class="panel w-[420px] max-w-[92vw] p-3.5">
+    <!-- overflow-visible: у .panel скрытое переполнение, иначе выпадающий
+         список подсказок обрезается по нижнему краю диалога. -->
+    <div class="panel overflow-visible w-[420px] max-w-[92vw] p-3.5">
       <div class="flex items-center gap-2">
         <span
           class="w-5 h-5 rounded-full bg-crit text-white text-[12px] font-bold grid place-items-center shrink-0"
@@ -165,15 +244,42 @@ function pickOnMap() {
           />
         </label>
 
-        <label class="col-span-2 flex flex-col gap-1">
-          <span class="text-[11px] text-muted">Адрес</span>
-          <p>Надо прикрутить сюда геокодер</p>
+        <div class="col-span-2 flex flex-col gap-1 relative">
+          <span class="text-[11px] text-muted">
+            Адрес
+            <span v-if="searching" class="text-muted">— ищем…</span>
+            <span v-else-if="hintError" class="text-serious">— {{ hintError }}</span>
+          </span>
           <input
             v-model="address"
             placeholder="Москва, ул. Полбина, д. 9"
+            autocomplete="off"
             class="px-2 py-1.5 rounded-lg border border-hair-2 text-[13px] focus:outline-none focus:border-brand-deep"
+            @input="onAddressInput"
+            @keydown="onAddressKey"
+            @focus="hintsOpen = hints.length > 0"
           />
-        </label>
+
+          <ul
+            v-if="hintsOpen"
+            class="absolute left-0 right-0 top-[52px] z-10 max-h-[190px] overflow-y-auto
+                   rounded-lg bg-panel border border-hair-2 shadow-lg py-1"
+          >
+            <li
+              v-for="(hint, i) in hints"
+              :key="`${hint.lat}-${hint.lon}-${i}`"
+              class="px-2.5 py-1.5 cursor-pointer transition-colors"
+              :class="i === hintIndex ? 'bg-brand/20' : 'hover:bg-panel-2'"
+              @mousedown.prevent="choose(hint)"
+              @mouseenter="hintIndex = i"
+            >
+              <span class="text-[12.5px]">{{ hint.title }}</span>
+              <span class="block text-[10.5px] text-muted leading-snug">
+                {{ hint.subtitle }}
+              </span>
+            </li>
+          </ul>
+        </div>
 
         <label class="col-span-2 flex flex-col gap-1">
           <span class="text-[11px] text-muted">
