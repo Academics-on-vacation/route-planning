@@ -10,6 +10,7 @@ from app.orm.base import Base
 
 if TYPE_CHECKING:
     from app.orm.engineer import Engineer
+    from app.orm.plan import Plan
     from app.orm.request import Request
 
 
@@ -28,3 +29,4 @@ class Region(Base):
     requests: Mapped[list["Request"]] = relationship(
         back_populates="region", cascade="all, delete-orphan"
     )
+    plans: Mapped[list["Plan"]] = relationship(cascade="all, delete-orphan")

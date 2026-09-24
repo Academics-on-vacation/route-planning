@@ -9,9 +9,12 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from app.config import settings
 from app.orm.base import Base
 from app.orm.engineer import Engineer  # noqa: F401
+from app.orm.plan import Plan  # noqa: F401
 from app.orm.region import Region  # noqa: F401
 from app.orm.request import Request  # noqa: F401
+from app.orm.route import Route  # noqa: F401
 from app.orm.route_cache import RouteCache  # noqa: F401
+from app.orm.stop import Stop  # noqa: F401
 
 config = context.config
 if config.config_file_name is not None:
