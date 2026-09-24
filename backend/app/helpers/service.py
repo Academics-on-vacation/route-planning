@@ -187,9 +187,7 @@ async def replan(
                 # первое нужно строке в списке, второе — тому, у кого
                 # заявку забрали, он про неё иначе не узнает.
                 stop.moved_from = before
-                moves.append(
-                    {"request_id": str(stop.ticket.id), "from": before, "to": eng_id}
-                )
+                moves.append({"request_id": str(stop.ticket.id), "from": before, "to": eng_id})
         route.stops = frozen.get(eng_id, []) + route.stops
         route.engeneer = by_id[eng_id]
         # Нитку рисуем заново уже по всему дню — от настоящей точки
@@ -200,7 +198,8 @@ async def replan(
     plan.meta["replan"] = {
         "frozen_at": at.isoformat(timespec="minutes"),
         "frozen_stops": sum(len(v) for v in frozen.values()),
-        "replanned_stops": sum(len(r.stops) for r in plan.used_routes) - sum(len(v) for v in frozen.values()),
+        "replanned_stops": sum(len(r.stops) for r in plan.used_routes)
+        - sum(len(v) for v in frozen.values()),
         "moved": len(moves),
         "moves": moves,
         "base_plan_id": snapshot.id,
