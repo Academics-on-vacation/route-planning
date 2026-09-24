@@ -11,8 +11,6 @@ from app.solver.greedy import GreedySolver
 
 
 class DuplicateRequestError(Exception):
-
-
     def __init__(self, external_id: str):
         self.external_id = external_id
         super().__init__(f"Заявка с external_id={external_id!r} уже существует в этом регионе")
@@ -47,6 +45,7 @@ async def build_plan(
     region: Region,
     work_date: date | None = None,
     use_api: bool = True,
+    persist: bool = True,
 ) -> dict:
     work_date = work_date or await repository.first_work_date(session, region.id)
     if work_date is None:
@@ -68,6 +67,10 @@ async def build_plan(
     plan = await run_in_threadpool(solver.solve, tickets, engineers)
 
     plan.meta["cache_saved"] = await repository.save_leg_cache(session, cache.pending)
+
+    # Снимок плана в базе: с него будет стартовать перепланирование.
+    if persist:
+        plan.meta["plan_id"] = await repository.save_plan(session, region.id, work_date, plan)
 
     return plan.to_json(region.id, work_date)
 

@@ -214,7 +214,6 @@ class GreedySolver(Solver):
 
         from ..twogis.client import car_route, pedestrian_route
 
-
         try:
             self.api_calls += 1
             fn = car_route if transport == TransportType.CAR else pedestrian_route

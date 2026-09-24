@@ -3,6 +3,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import EngineerView from "./views/EngineerView.vue";
 import RegionView from "./views/RegionView.vue";
 import { ensureRegions, state } from "./store.js";
+import EngineersEditView from "./views/admin/EngineersEditView.vue";
 
 const routes = [
   {
@@ -20,6 +21,13 @@ const routes = [
       engineerId: Number(route.params.engineerId),
     }),
   },
+  // Админка исполнителей. Регион в адресе не нужен: страница про всех
+  // сразу, фильтр по региону — локальное состояние экрана.
+  {
+    path: "/admin/engineers",
+    name: "admin-engineers",
+    component: EngineersEditView,
+  },
   // Корень и любой мусор — на регион по умолчанию. Какой именно,
   // знает только справочник, поэтому решает guard ниже.
   { path: "/:pathMatch(.*)*", redirect: "/region/0" },
@@ -32,6 +40,8 @@ export const router = createRouter({
 
 router.beforeEach(async (to) => {
   const regions = await ensureRegions();
+  // У админки нет региона в адресе — проверять нечего.
+  if (to.name === "admin-engineers") return true;
   if (!regions.length) return true; // бэкенд молчит — покажем ошибку из store
 
   const id = Number(to.params.regionId);
@@ -46,5 +56,10 @@ router.beforeEach(async (to) => {
 
 router.afterEach((to) => {
   const region = state.regions.find((r) => r.id === Number(to.params.regionId));
-  document.title = region ? `${region.title} — выезды` : "Планирование выездов";
+  const title = region ? `${region.title} — выезды` : "Планирование выездов";
+  if (to.name === "admin-engineers") {
+    document.title = "Исполнители — настройка";
+    return;
+  }
+  document.title = to.name === "engineer" ? `Памятка · ${title}` : title;
 });

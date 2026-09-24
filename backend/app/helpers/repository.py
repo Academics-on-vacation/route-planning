@@ -3,14 +3,17 @@ from __future__ import annotations
 from collections import Counter
 from datetime import date, datetime, time, timedelta
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.orm.engineer import Engineer
+from app.orm.plan import Plan as PlanRow
 from app.orm.region import Region
 from app.orm.request import Request
+from app.orm.route import Route as RouteRow
 from app.orm.route_cache import RouteCache
+from app.orm.stop import Stop as StopRow
 from app.schemas import RequestCreate
 
 
@@ -41,6 +44,13 @@ async def list_requests(session: AsyncSession, region_id: int, work_date: date) 
         .order_by(Request.window_start, Request.id)
     )
     return list(rows)
+
+
+async def list_all_engineers(session: AsyncSession, region_id: int | None = None) -> list[Engineer]:
+    query = select(Engineer).order_by(Engineer.region_id, Engineer.id)
+    if region_id is not None:
+        query = query.where(Engineer.region_id == region_id)
+    return list(await session.scalars(query))
 
 
 async def list_engineers(session: AsyncSession, region_id: int) -> list[Engineer]:
@@ -116,3 +126,69 @@ async def save_leg_cache(session: AsyncSession, rows: list[dict]) -> int:
     )
     await session.commit()
     return result.rowcount
+
+
+async def save_plan(session: AsyncSession, region_id: int, work_date: date, plan) -> int:
+    """Сохранить снимок плана и вернуть его id."""
+    day = datetime.combine(work_date, time.min)
+
+    await session.execute(
+        update(PlanRow)
+        .where(
+            PlanRow.region_id == region_id,
+            PlanRow.work_date == work_date,
+            PlanRow.is_active.is_(True),
+        )
+        .values(is_active=False)
+    )
+
+    row = PlanRow(
+        region_id=region_id,
+        work_date=work_date,
+        solver=str(plan.meta.get("solver", ""))[:64],
+        provider=str(plan.meta.get("provider", ""))[:16],
+        metrics=plan.metrics(),
+        meta={**plan.meta, "unassigned": [u.to_json() for u in plan.unassigned]},
+    )
+
+    for route in plan.used_routes:
+        route_row = RouteRow(
+            engineer_id=route.engeneer.id,
+            distance_km=round(route.distance_km, 3),
+            travel_min=route.travel_minutes,
+            service_min=route.service_minutes,
+            wait_min=route.wait_minutes,
+        )
+        for seq, stop in enumerate(route.stops, 1):
+            if stop.ticket.request_id is None:
+                continue
+            route_row.stops.append(
+                StopRow(
+                    request_id=stop.ticket.request_id,
+                    seq=seq,
+                    depart_at=day + timedelta(minutes=stop.depart),
+                    arrive_at=day + timedelta(minutes=stop.arrive),
+                    start_at=day + timedelta(minutes=stop.start),
+                    end_at=day + timedelta(minutes=stop.end),
+                    travel_min=stop.travel_minutes,
+                    travel_km=round(stop.travel_km, 3),
+                )
+            )
+        row.routes.append(route_row)
+
+    session.add(row)
+    await session.flush()
+    plan_id = row.id
+    await session.commit()
+    return plan_id
+
+
+async def active_plan(session: AsyncSession, region_id: int, work_date: date) -> PlanRow | None:
+    """Действующий план на день — основа для перепланирования."""
+    return await session.scalar(
+        select(PlanRow).where(
+            PlanRow.region_id == region_id,
+            PlanRow.work_date == work_date,
+            PlanRow.is_active.is_(True),
+        )
+    )

@@ -4,18 +4,21 @@ import { RouterLink, RouterView, useRoute } from "vue-router";
 
 import { metrics, state } from "./store.js";
 
+// Справочник регионов грузит guard роутера — до того, как покажется
+// хоть один экран. Здесь только рисуем.
+
 // const summary = computed(() => {
-//   const m = metrics.value
-//   if (!m) return []
+//   const m = metrics.value;
+//   if (!m) return [];
 //   return [
-//     { k: 'закрыто', v: `${m.assigned}/${m.requests_total}`, lead: true },
-//     { k: 'бригад', v: m.engineers_used },
-//     { k: 'пробег', v: `${Math.round(m.total_distance_km)} км` },
-//     { k: 'в пути', v: `${Math.round(m.total_travel_min / 60)} ч` },
-//     { k: 'простой', v: `${Math.round(m.total_wait_min / 60)} ч` },
-//     { k: 'окна', v: m.window_violations, bad: m.window_violations > 0 },
-//   ]
-// })
+//     { k: "закрыто", v: `${m.assigned}/${m.requests_total}`, lead: true },
+//     { k: "бригад", v: m.engineers_used },
+//     { k: "пробег", v: `${Math.round(m.total_distance_km)} км` },
+//     { k: "в пути", v: `${Math.round(m.total_travel_min / 60)} ч` },
+//     { k: "простой", v: `${Math.round(m.total_wait_min / 60)} ч` },
+//     { k: "окна", v: m.window_violations, bad: m.window_violations > 0 },
+//   ];
+// });
 </script>
 
 <template>

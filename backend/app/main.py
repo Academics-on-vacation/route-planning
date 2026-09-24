@@ -83,6 +83,15 @@ async def create_request(
     return request_to_json(row)
 
 
+@app.get("/api/engineers")
+async def get_all_engineers(
+    region_id: int | None = None,
+    session: AsyncSession = Depends(get_session),
+) -> list[dict]:
+    rows = await repository.list_all_engineers(session, region_id)
+    return [engineer_to_json(row) for row in rows]
+
+
 @app.patch("/api/engineers/{engineer_id}")
 async def patch_engineer(
     engineer_id: int,

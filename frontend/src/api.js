@@ -20,11 +20,16 @@ export const api = {
   regions: () => req("/regions"),
   requests: (id) => req(`/regions/${id}/requests`),
   engineers: (id) => req(`/regions/${id}/engineers`),
-  plan: (id, options = {}) => {
-    console.log("here!!!", id, options);
-    return req("/plan", {
+  allEngineers: (regionId = null) =>
+    req(`/engineers${regionId == null ? "" : `?region_id=${regionId}`}`),
+  setStartPoint: (id, start_lat, start_lon) =>
+    req(`/engineers/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ start_lat, start_lon }),
+    }),
+  plan: (id, options = {}) =>
+    req("/plan", {
       method: "POST",
       body: JSON.stringify({ region_id: id, options }),
-    });
-  },
+    }),
 };
