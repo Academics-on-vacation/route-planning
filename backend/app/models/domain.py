@@ -100,8 +100,13 @@ class Ticket:
         address: str = "",
         district: str | None = None,
         equipment: dict | list | None = None,
+        request_id: int | None = None,
     ):
         self.id = id
+        # id — публичный (external_id, при коллизии с суффиксом); request_id —
+        # настоящий PK таблицы request, нужен для связи stop.request_id при
+        # сохранении плана в БД.
+        self.request_id = request_id
         self.point = point
         self.duration_minutes = duration_minutes
         self.work_start = work_start
@@ -130,6 +135,7 @@ class Ticket:
             address=row.address,
             district=row.district,
             equipment=getattr(row, "equipment", None),
+            request_id=row.id,
         )
 
     def to_json(self, day: date) -> dict:
