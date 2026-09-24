@@ -6,7 +6,7 @@ from starlette.concurrency import run_in_threadpool
 
 from app.helpers import repository
 from app.helpers.cache import LegCache
-from app.models.domain import Engeneer, Point, Region, Stop, Ticket
+from app.models.domain import Engeneer, Point, Region, Stop, Ticket, at
 from app.schemas import RequestCreate
 from app.solver.greedy import GreedySolver
 
@@ -212,7 +212,6 @@ async def replan(
     return plan.to_json(region.id, work_date)
 
 
-
 def _stored_json(snapshot, region_id: int, work_date: date, public: dict, engineers) -> dict:
     replan_meta = (snapshot.meta or {}).get("replan") or {}
     frozen_at = replan_meta.get("frozen_at")
@@ -276,9 +275,7 @@ def _stored_json(snapshot, region_id: int, work_date: date, public: dict, engine
     }
 
 
-async def stored_plan(
-    session: AsyncSession, region: Region, work_date: date | None = None
-) -> dict:
+async def stored_plan(session: AsyncSession, region: Region, work_date: date | None = None) -> dict:
     """Действующий план из базы. Солвер не запускается.
 
     Плана нет — отдаём пустой каркас с meta.stored = false: фронту этого
@@ -286,7 +283,9 @@ async def stored_plan(
     """
     work_date = work_date or await repository.first_work_date(session, region.id)
     if work_date is None:
-        return {**_empty(region.id, None, "в базе нет заявок для этого региона"), }
+        return {
+            **_empty(region.id, None, "в базе нет заявок для этого региона"),
+        }
 
     snapshot = await repository.active_plan(session, region.id, work_date)
     if snapshot is None:
@@ -296,6 +295,4 @@ async def stored_plan(
 
     rows = await repository.list_requests(session, region.id, work_date)
     engineers = await load_engineers(session, region.id, region.office)
-    return _stored_json(
-        snapshot, region.id, work_date, repository.public_ids(rows), engineers
-    )
+    return _stored_json(snapshot, region.id, work_date, repository.public_ids(rows), engineers)

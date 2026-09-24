@@ -40,13 +40,16 @@ export const api = {
       body: JSON.stringify({ region_id: regionId, at, options }),
     }),
 
+  // Сохранённый план: чтение из базы, ничего не считает.
+  storedPlan: (id) => req(`/plan?region_id=${id}`),
+
+  // Явный пересчёт дня.
   plan: (id, options = {}) =>
     req("/plan", {
       method: "POST",
       body: JSON.stringify({ region_id: id, options }),
     }),
 
-    geocode: (q, regionId) =>
-        req(`/geocode?q=${encodeURIComponent(q)}&region_id=${regionId}`),
-
+  geocode: (q, regionId) =>
+    req(`/geocode?q=${encodeURIComponent(q)}&region_id=${regionId}`),
 };

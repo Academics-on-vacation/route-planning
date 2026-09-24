@@ -11,6 +11,8 @@ import {
   SKILLS,
   clearSelection,
   loadRegion,
+  planMissing,
+  rebuild,
   replanInfo,
   state,
   stopIndex,
@@ -65,6 +67,15 @@ const slack = computed(() => {
       class="absolute top-4 right-4 z-[1100] flex flex-col items-end gap-1.5"
     >
       <button
+        class="px-3 py-2 rounded-lg bg-panel border border-hair-2 text-[12.5px] shadow cursor-pointer hover:bg-panel-2 transition print:hidden disabled:opacity-50 disabled:cursor-default"
+        :disabled="state.loading"
+        title="Посчитать день заново"
+        @click="rebuild()"
+      >
+        Пересчитать
+      </button>
+
+      <button
         class="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-crit text-white text-[12.5px] font-semibold shadow cursor-pointer hover:brightness-110 transition print:hidden"
         @click="emergencyOpen = true"
       >
@@ -94,6 +105,27 @@ const slack = computed(() => {
             {{ replanInfo.moved }}
           </dd>
         </dl>
+      </div>
+    </div>
+
+    <!-- Плана на этот день ещё нет: показываем не пустой экран, а то,
+         что с ним делать. -->
+    <div
+      v-if="planMissing && !state.loading"
+      class="absolute inset-0 z-[1150] grid place-items-center bg-canvas/80 print:hidden"
+    >
+      <div class="panel px-5 py-4 text-center max-w-[320px]">
+        <p class="text-[14px] font-semibold">План на этот день не рассчитан</p>
+        <p class="mt-1 text-[12px] text-muted">
+          Страница показывает сохранённый план. Расчёт запускается вручную — он
+          занимает несколько секунд и тратит квоту 2ГИС.
+        </p>
+        <button
+          class="mt-3 px-4 py-2 rounded-lg bg-brand text-black text-[13px] font-semibold cursor-pointer hover:bg-brand-deep transition-colors"
+          @click="rebuild()"
+        >
+          Рассчитать
+        </button>
       </div>
     </div>
 

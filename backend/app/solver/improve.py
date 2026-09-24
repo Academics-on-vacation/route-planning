@@ -74,7 +74,7 @@ def improve(
     dropped = list(dropped)
 
     def opening(eng_id: int) -> float:
-        """Сколько стоит поднять бригаду """
+        """Сколько стоит поднять бригаду"""
         return 0.0 if by_id[eng_id].deployed else W_ENGINEER
 
     # Кэш цен маршрутов: за один проход один и тот же маршрут пересчитывается десятки раз.

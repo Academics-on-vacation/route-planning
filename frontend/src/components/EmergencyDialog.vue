@@ -95,9 +95,9 @@ async function submit() {
     used.add(base);
     let options = {};
     console.log(localStorage.getItem("api"));
-    if (localStorage.getItem("api")) {
+    `if (localStorage.getItem("api")) {
       options["use_api"] = true;
-    }
+    }`;
     await replan(at, options);
     emit("close");
   } catch (e) {
@@ -248,7 +248,9 @@ onBeforeUnmount(() => clearTimeout(timer));
           <span class="text-[11px] text-muted">
             Адрес
             <span v-if="searching" class="text-muted">— ищем…</span>
-            <span v-else-if="hintError" class="text-serious">— {{ hintError }}</span>
+            <span v-else-if="hintError" class="text-serious"
+              >— {{ hintError }}</span
+            >
           </span>
           <input
             v-model="address"
@@ -262,8 +264,7 @@ onBeforeUnmount(() => clearTimeout(timer));
 
           <ul
             v-if="hintsOpen"
-            class="absolute left-0 right-0 top-[52px] z-10 max-h-[190px] overflow-y-auto
-                   rounded-lg bg-panel border border-hair-2 shadow-lg py-1"
+            class="absolute left-0 right-0 top-[52px] z-10 max-h-[190px] overflow-y-auto rounded-lg bg-panel border border-hair-2 shadow-lg py-1"
           >
             <li
               v-for="(hint, i) in hints"

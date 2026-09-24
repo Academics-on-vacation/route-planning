@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING
 
 from sqlalchemy import Double, ForeignKey, SmallInteger, text
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.orm.base import Base
@@ -24,6 +25,8 @@ class Route(Base):
     travel_min: Mapped[int] = mapped_column(SmallInteger, default=0, server_default=text("0"))
     service_min: Mapped[int] = mapped_column(SmallInteger, default=0, server_default=text("0"))
     wait_min: Mapped[int] = mapped_column(SmallInteger, default=0, server_default=text("0"))
+
+    geometry: Mapped[list | None] = mapped_column(JSONB, nullable=True)
 
     is_active: Mapped[bool] = mapped_column(default=True, server_default=text("true"))
 

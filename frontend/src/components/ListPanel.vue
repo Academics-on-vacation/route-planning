@@ -132,12 +132,12 @@ const isUrgent = (id) => (state.requests[String(id)]?.priority ?? 100) <= 10;
               :class="isUrgent(stop.request_id) ? 'text-crit' : ''"
               >{{ stop.request_id }}</span
             >
-<!--            <span-->
-<!--              v-if="isUrgent(stop.request_id)"-->
-<!--              class="ml-1 px-1 rounded bg-crit text-white text-[9.5px] font-semibold uppercase tracking-wide align-[1px]"-->
-<!--            >-->
-<!--              авария-->
-<!--            </span>-->
+            <!--            <span-->
+            <!--              v-if="isUrgent(stop.request_id)"-->
+            <!--              class="ml-1 px-1 rounded bg-crit text-white text-[9.5px] font-semibold uppercase tracking-wide align-[1px]"-->
+            <!--            >-->
+            <!--              авария-->
+            <!--            </span>-->
             <span class="ml-1 text-muted">{{
               districtOf(stop.request_id)
             }}</span>

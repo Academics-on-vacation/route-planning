@@ -5,9 +5,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db import get_session
 from app import geocoder
 from app.config import settings
+from app.db import get_session
 from app.helpers import repository, service
 from app.importing.router import router as import_router
 from app.logging_config import configure_logging
@@ -110,7 +110,9 @@ async def post_replan(
             use_api=bool(options.get("use_api", False)),
         )
     except service.NoActivePlanError:
-        raise HTTPException(409, "на эту дату нет действующего плана — сначала рассчитайте день") from None
+        raise HTTPException(
+            409, "на эту дату нет действующего плана — сначала рассчитайте день"
+        ) from None
 
 
 @app.get("/api/geocode")
@@ -125,9 +127,7 @@ async def get_geocode(
         if region:
             around = (region.office.latitude, region.office.longitude)
     try:
-        found = await geocoder.suggest_addresses(
-            q, settings.yandex_geocoder_api_key, around
-        )
+        found = await geocoder.suggest_addresses(q, settings.yandex_geocoder_api_key, around)
     except geocoder.GeocodingError as e:
         raise HTTPException(503, str(e)) from None
     return [s.model_dump() for s in found]
@@ -204,8 +204,7 @@ async def post_plan(
 async def get_plan(
     region_id: int = 1,
     work_date: date | None = None,
-    use_api: bool = True,
     session: AsyncSession = Depends(get_session),
 ) -> dict:
     region = await _region(session, region_id)
-    return await service.build_plan(session, region, work_date, use_api)
+    return await service.stored_plan(session, region, work_date)

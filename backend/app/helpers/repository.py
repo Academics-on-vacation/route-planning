@@ -159,6 +159,7 @@ async def save_plan(session: AsyncSession, region_id: int, work_date: date, plan
             travel_min=route.travel_minutes,
             service_min=route.service_minutes,
             wait_min=route.wait_minutes,
+            geometry=route.geometry,
         )
         for seq, stop in enumerate(route.stops, 1):
             if stop.ticket.request_id is None:

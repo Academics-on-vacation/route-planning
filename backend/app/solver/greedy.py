@@ -212,7 +212,7 @@ class GreedySolver(Solver):
 
         from ..twogis.client import car_route, pedestrian_route
 
-        print("Нет в кэше - иду в API")
+        # print("Нет в кэше - иду в API")
         try:
             self.api_calls += 1
             fn = car_route if transport == TransportType.CAR else pedestrian_route
@@ -240,11 +240,11 @@ class GreedySolver(Solver):
         when = self._when(depart)
         cached = self.cache.get(transport, a.coords, b.coords, when)
         if cached is not None:
-            print("Из кэша")
+            # print("Из кэша")
             self.cache_taken += 1
             return cached[0] + OVERHEAD_MIN, round(cached[1], 2)
 
-        print("______Нет в кэше_____")
+        # print("______Нет в кэше_____")
         if not self.use_api:
             return estimate(a, b, transport, depart)
 

@@ -92,7 +92,6 @@ if __name__ == "__main__":
     asyncio.run(geocode_all_requests())
 
 
-
 GEOCODER_URL = os.environ.get("GEOCODER_URL", "https://geocode-maps.yandex.ru/1.x/")
 
 
@@ -107,11 +106,7 @@ class Suggestion(BaseModel):
 
 
 def _parse(payload: dict) -> list[Suggestion]:
-    members = (
-        payload.get("response", {})
-        .get("GeoObjectCollection", {})
-        .get("featureMember", [])
-    )
+    members = payload.get("response", {}).get("GeoObjectCollection", {}).get("featureMember", [])
     out: list[Suggestion] = []
     for member in members:
         obj = member.get("GeoObject") or {}
