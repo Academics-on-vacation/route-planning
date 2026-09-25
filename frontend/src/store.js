@@ -86,6 +86,11 @@ export const unassignedIndex = computed(() => {
 
 export const metrics = computed(() => plan.value?.metrics ?? null);
 
+/** План на этот день ещё ни разу не считали. */
+export const planMissing = computed(
+  () => !!plan.value && plan.value.meta?.stored === false,
+);
+
 /** Сводка перепланирования, если текущий план получен по аварии. */
 export const replanInfo = computed(() => plan.value?.meta?.replan ?? null);
 
@@ -208,13 +213,7 @@ export async function loadRegion(id) {
 
     // Дальше считает солвер — самая долгая часть загрузки.
     state.stage = "plan";
-    let options = {};
-    console.log(localStorage.getItem("api"));
-    if (localStorage.getItem("api")) {
-      options["use_api"] = true;
-    }
-    console.log("opts:", options);
-    const fresh = await api.plan(id, options);
+    const fresh = await api.storedPlan(id);
     if (mine !== token) return;
     plan.value = fresh;
     // Ориентир для полосы прогресса на следующий раз.
@@ -241,6 +240,9 @@ export async function rebuild(options = {}) {
   state.loadingSince = startedAt;
   state.stage = "plan";
   state.error = null;
+  if (localStorage.getItem("api")) {
+    options["use_api"] = true;
+  }
   try {
     const fresh = await api.plan(id, options);
     if (mine !== token) return;
