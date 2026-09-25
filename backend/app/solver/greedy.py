@@ -229,9 +229,7 @@ class GreedySolver(Solver):
         where, points = eng.start_point, []
         for stop in stops:
             to = stop.ticket.point
-            leg = leg_points(
-                self.cache.raw(eng.transport, where.coords, to.coords, self._when(stop.depart))
-            )
+            leg = leg_points(self._raw(where, to, eng.transport, stop.depart))
             points += leg or [[where.latitude, where.longitude], [to.latitude, to.longitude]]
             where = to
         return thin(points) or None
@@ -239,6 +237,7 @@ class GreedySolver(Solver):
     def _road(self, a: Point, b: Point, transport: TransportType, depart: int) -> tuple[int, float]:
         when = self._when(depart)
         cached = self.cache.get(transport, a.coords, b.coords, when)
+
         if cached is not None:
             # print("Из кэша")
             self.cache_taken += 1

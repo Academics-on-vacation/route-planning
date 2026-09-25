@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections import Counter
 from datetime import date, datetime, time, timedelta
 
-from sqlalchemy import func, select, update
+from sqlalchemy import func, select, text, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -122,8 +122,13 @@ async def load_leg_cache(session: AsyncSession, work_date: date) -> list[RouteCa
 async def save_leg_cache(session: AsyncSession, rows: list[dict]) -> int:
     if not rows:
         return 0
+    stmt = pg_insert(RouteCache).values(rows)
     result = await session.execute(
-        pg_insert(RouteCache).values(rows).on_conflict_do_nothing(constraint="uq_route_cache_leg")
+        stmt.on_conflict_do_update(
+            constraint="uq_route_cache_leg",
+            set_={"payload": stmt.excluded.payload},
+            where=text("excluded.payload <> '{}'::jsonb"),
+        )
     )
     await session.commit()
     return result.rowcount

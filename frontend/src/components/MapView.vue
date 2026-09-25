@@ -188,7 +188,7 @@ function redraw() {
             req.window_start,
           )}–${hhmm(req.window_end)}, приезд ${hhmm(stop.start_at)}<br>${
             route.engineer_name
-          }`,
+          }, (${req.lat}, ${req.lon})`,
         )
         .on("click", () => select(req.id))
         .on("mouseover", () => hover(req.id))

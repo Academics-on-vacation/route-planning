@@ -31,7 +31,7 @@ class LegCache:
         # Хранятся отдельно от (минуты, км), потому что нужны только
         # в самом конце и только у плеч итогового плана.
         self._raw: dict[tuple, dict] = {}
-        self._pending: list[dict] = []
+        self._pending: dict[tuple, dict] = {}
         self.hits = 0
         self.misses = 0
 
@@ -70,24 +70,34 @@ class LegCache:
         if when is None:
             return
         key = leg_key(transport, origin, destination, when)
-        if key in self._legs:
-            return
-        self._legs[key] = (minutes, km)
-        self._pending.append(
-            {
-                "transport": key[0],
-                "from_lat": key[1],
-                "from_lon": key[2],
-                "to_lat": key[3],
-                "to_lon": key[4],
-                "departure_at": key[5],
-                "minutes": minutes,
-                "km": km,
-                "payload": payload or {},
-            }
+        payload = payload or {}
+        if key in self._legs and (self._raw.get(key) or not payload):
+            return  # ничего нового не принесли
+
+        logger.debug(
+            "Пишу в кэш %s -> %s (%s), геометрия: %s",
+            origin,
+            destination,
+            when,
+            "есть" if payload else "нет",
         )
+        # setdefault возвращает то, что осталось лежать: для известного
+        # плеча — старые минуты, для нового — эти.
+        minutes, km = self._legs.setdefault(key, (minutes, km))
+        self._raw[key] = payload
+        self._pending[key] = {
+            "transport": key[0],
+            "from_lat": key[1],
+            "from_lon": key[2],
+            "to_lat": key[3],
+            "to_lon": key[4],
+            "departure_at": key[5],
+            "minutes": minutes,
+            "km": km,
+            "payload": payload,
+        }
 
     @property
     def pending(self) -> list[dict]:
-        """Строки, которых в базе ещё нет."""
-        return self._pending
+        """Строки, которых в базе ещё нет или которым нужна геометрия."""
+        return list(self._pending.values())
