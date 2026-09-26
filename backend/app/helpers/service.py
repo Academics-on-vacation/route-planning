@@ -1,15 +1,19 @@
 import copy
+import logging
 from datetime import date, datetime, time
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.concurrency import run_in_threadpool
 
+from app.evaluation import evaluate_plan
 from app.helpers import repository
 from app.helpers.cache import LegCache
 from app.models.domain import Engeneer, Point, Region, Stop, Ticket, at
 from app.schemas import RequestCreate
 from app.solver.greedy import GreedySolver
 from app.validation import validate_plan
+
+logger = logging.getLogger(__name__)
 
 
 class NoActivePlanError(Exception):
@@ -71,7 +75,7 @@ async def build_plan(
     )
 
     plan = await run_in_threadpool(solver.solve, tickets, engineers)
-    validate_plan(plan, tickets, engineers).raise_if_invalid()
+    metrics = evaluate_plan(plan, tickets, engineers)
 
     plan.meta["cache_saved"] = await repository.save_leg_cache(session, cache.pending)
 
@@ -79,6 +83,7 @@ async def build_plan(
     if persist:
         plan.meta["plan_id"] = await repository.save_plan(session, region.id, work_date, plan)
 
+    logger.info("cost=%s", metrics.cost)
     return plan.to_json(region.id, work_date)
 
 
@@ -198,7 +203,7 @@ async def replan(
         # старта, а не от той, где инженер оказался к моменту аварии.
         route.geometry = solver._geometry(route.engeneer, route.stops)
 
-    validate_plan(plan, tickets, engineers, frozen=frozen, not_before=at_minutes).raise_if_invalid()
+    metrics = evaluate_plan(plan, tickets, engineers, frozen=frozen, not_before=at_minutes)
 
     plan.meta["cache_saved"] = await repository.save_leg_cache(session, cache.pending)
     plan.meta["replan"] = {
@@ -214,6 +219,7 @@ async def replan(
     if persist:
         plan.meta["plan_id"] = await repository.save_plan(session, region.id, work_date, plan)
 
+    logger.info("cost=%s", metrics.cost)
     return plan.to_json(region.id, work_date)
 
 

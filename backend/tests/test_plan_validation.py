@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from copy import deepcopy
 from datetime import date, datetime
 from types import SimpleNamespace
@@ -179,15 +180,19 @@ def service_context(example, monkeypatch):
     )
 
 
-def test_build_saves_valid_result(service_context):
+def test_build_saves_valid_result(service_context, caplog):
+    caplog.set_level(logging.INFO, logger=service.__name__)
     ctx = service_context
     result = asyncio.run(service.build_plan(ctx.session, ctx.region, ctx.day, use_api=False))
     assert result["meta"]["plan_id"] == 7
     ctx.save_plan.assert_awaited_once()
+    messages = [record.getMessage() for record in caplog.records if record.name == service.__name__]
+    assert messages == ["cost=2030"]
 
 
 @pytest.mark.parametrize("persist", [True, False])
-def test_build_rejects_invalid_result_before_saving(service_context, persist):
+def test_build_rejects_invalid_result_before_saving(service_context, persist, caplog):
+    caplog.set_level(logging.INFO, logger=service.__name__)
     ctx = service_context
     ctx.plan.routes.clear()
     with pytest.raises(InvalidPlanError):
@@ -196,10 +201,12 @@ def test_build_rejects_invalid_result_before_saving(service_context, persist):
         )
     ctx.save_plan.assert_not_awaited()
     ctx.save_cache.assert_not_awaited()
+    assert not [record for record in caplog.records if record.name == service.__name__]
 
 
 @pytest.mark.parametrize("with_route", [True, False])
-def test_replan_validates_merged_frozen_prefix(service_context, monkeypatch, with_route):
+def test_replan_validates_merged_frozen_prefix(service_context, monkeypatch, with_route, caplog):
+    caplog.set_level(logging.INFO, logger=service.__name__)
     ctx = service_context
     row = SimpleNamespace(
         request_id=1,
@@ -221,9 +228,24 @@ def test_replan_validates_merged_frozen_prefix(service_context, monkeypatch, wit
         result = asyncio.run(call)
         assert result["routes"][0]["stops"][0]["frozen"]
         ctx.save_plan.assert_awaited_once()
+        messages = [
+            record.getMessage() for record in caplog.records if record.name == service.__name__
+        ]
+        # Свободная часть пуста, но метрика учитывает зафиксированный визит.
+        assert messages == ["cost=2030"]
     else:
         with pytest.raises(InvalidPlanError) as exc:
             asyncio.run(call)
         assert "frozen_missing" in codes(exc.value.result)
         ctx.save_plan.assert_not_awaited()
         ctx.save_cache.assert_not_awaited()
+        assert not [record for record in caplog.records if record.name == service.__name__]
+
+
+def test_failed_save_does_not_log_successful_plan(service_context, caplog):
+    caplog.set_level(logging.INFO, logger=service.__name__)
+    ctx = service_context
+    ctx.save_plan.side_effect = RuntimeError("Cannot save plan")
+    with pytest.raises(RuntimeError, match="Cannot save plan"):
+        asyncio.run(service.build_plan(ctx.session, ctx.region, ctx.day, use_api=False))
+    assert not [record for record in caplog.records if record.name == service.__name__]
