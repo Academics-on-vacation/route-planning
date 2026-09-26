@@ -2,10 +2,8 @@ from __future__ import annotations
 
 from collections import Counter
 from datetime import date, datetime, time, timedelta
-from decimal import Decimal
 
-from sqlalchemy import func, select, text, update
-from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -14,8 +12,9 @@ from app.orm.plan import Plan as PlanRow
 from app.orm.region import Region
 from app.orm.request import Request
 from app.orm.route import Route as RouteRow
-from app.orm.route_cache import RouteCache
 from app.orm.stop import Stop as StopRow
+from app.presentation import metrics_to_json, unassigned_to_json
+from app.results import PlanningResult
 from app.schemas import RequestCreate
 
 
@@ -109,36 +108,11 @@ def public_ids(rows: list[Request]) -> dict[int, str]:
     }
 
 
-async def load_leg_cache(session: AsyncSession, work_date: date) -> list[RouteCache]:
-    """Сохранённые плечи на этот день — все разом, перед запуском солвера."""
-    rows = await session.scalars(
-        select(RouteCache).where(
-            RouteCache.departure_at >= datetime.combine(work_date - timedelta(days=1), time.min),
-            RouteCache.departure_at < datetime.combine(work_date + timedelta(days=2), time.min),
-        )
-    )
-    return list(rows)
-
-
-async def save_leg_cache(session: AsyncSession, rows: list[dict]) -> int:
-    if not rows:
-        return 0
-    stmt = pg_insert(RouteCache).values(rows)
-    result = await session.execute(
-        stmt.on_conflict_do_update(
-            constraint="uq_route_cache_leg",
-            set_={"payload": stmt.excluded.payload},
-            where=text("excluded.payload <> '{}'::jsonb"),
-        )
-    )
-    await session.commit()
-    return result.rowcount
-
-
-async def save_plan(
-    session: AsyncSession, region_id: int, work_date: date, plan, *, cost: Decimal
-) -> int:
+async def save_plan(session: AsyncSession, result: PlanningResult) -> int:
     """Сохранить снимок плана и вернуть его id."""
+    if result.work_date is None or result.metrics is None:
+        raise ValueError("Сохранить можно только рассчитанный план с датой и метриками")
+    region_id, work_date, plan = result.region_id, result.work_date, result.plan
     day = datetime.combine(work_date, time.min)
 
     await session.execute(
@@ -154,11 +128,10 @@ async def save_plan(
     row = PlanRow(
         region_id=region_id,
         work_date=work_date,
-        solver=str(plan.meta.get("solver", ""))[:64],
-        provider=str(plan.meta.get("provider", ""))[:16],
-        # JSONB не поддерживает Decimal напрямую; строка сохраняет точное значение.
-        metrics={**plan.metrics(), "cost": str(cost)},
-        meta={**plan.meta, "unassigned": [u.to_json() for u in plan.unassigned]},
+        solver=str(result.metadata.get("solver", ""))[:64],
+        provider=str(result.metadata.get("provider", ""))[:16],
+        metrics=metrics_to_json(result),
+        meta={**result.metadata, "unassigned": [unassigned_to_json(u) for u in plan.unassigned]},
     )
 
     for route in plan.used_routes:
@@ -168,7 +141,7 @@ async def save_plan(
             travel_min=route.travel_minutes,
             service_min=route.service_minutes,
             wait_min=route.wait_minutes,
-            geometry=route.geometry,
+            geometry=result.geometries.get(route.engeneer.id),
         )
         for seq, stop in enumerate(route.stops, 1):
             if stop.ticket.request_id is None:

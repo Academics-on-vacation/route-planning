@@ -8,10 +8,11 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-from app.evaluation import CostWeights, PlanScore, compare_plans, evaluate_plan
 from app.helpers import service
 from app.models.domain import Region
-from app.validation import InvalidPlanError
+from app.results import PlanningResult
+from app.solver.evaluation import CostWeights, PlanScore, compare_plans, evaluate_plan
+from app.solver.validation import InvalidPlanError
 
 
 def test_metrics_and_cost_formula(plan_case):
@@ -59,11 +60,12 @@ def test_invalid_weights(weight):
 
 def test_cost_is_saved_and_logged_when_loading(plan_case, monkeypatch, caplog):
     caplog.set_level(logging.INFO, logger=service.__name__)
-    cost = evaluate_plan(plan_case.plan, plan_case.tickets, plan_case.engineers).cost
+    metrics = evaluate_plan(plan_case.plan, plan_case.tickets, plan_case.engineers)
     session = AsyncMock()
     session.add = Mock(side_effect=lambda row: setattr(row, "id", 7))
     day = date(2026, 8, 17)
-    asyncio.run(service.repository.save_plan(session, 1, day, plan_case.plan, cost=cost))
+    result = PlanningResult(1, day, plan_case.plan, metrics)
+    asyncio.run(service.repository.save_plan(session, result))
     snapshot = session.add.call_args.args[0]
     assert snapshot.metrics["cost"] == "12206.25"
     snapshot.created_at = datetime(2026, 8, 17)

@@ -13,14 +13,13 @@ from typing import NamedTuple
 import requests
 
 from app.logging_config import configure_logging
-from app.twogis import cache
+from app.routing.twogis import cache
 
 logger = logging.getLogger(__name__)
 
 KEY = os.environ.get("TWOGIS_API_KEY")
 
 TIMEOUT = 15
-REQUEST_PAUSE = 3
 
 RETRIES = 3  # попыток ПОСЛЕ первой
 BACKOFF_BASE = 0.8  # секунды до первого повтора

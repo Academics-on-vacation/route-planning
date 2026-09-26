@@ -31,5 +31,5 @@ def plan_case():
         Stop(tickets[0], 540, 550, 600, 630, 10, 1.25),
         Stop(tickets[2], 630, 640, 640, 670, 10, 2.5),
     ]
-    plan = Plan([Route(engineer, stops)], [Unassigned(tickets[1], "capacity", "Нет времени")], {})
+    plan = Plan([Route(engineer, stops)], [Unassigned(tickets[1], "capacity", "Нет времени")])
     return SimpleNamespace(plan=plan, tickets=tickets, engineers=[engineer])

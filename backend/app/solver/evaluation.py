@@ -1,4 +1,4 @@
-"""Метрики и сравнение допустимых планов, независимо от солвера и HTTP."""
+"""Общие метрики и сравнение допустимых планов для всех алгоритмов."""
 
 from dataclasses import dataclass, fields
 from decimal import Decimal
@@ -6,7 +6,7 @@ from math import isfinite
 from typing import Literal
 
 from app.models.domain import Engeneer, Plan, Stop, Ticket
-from app.validation import validate_plan
+from app.solver.validation import validate_plan
 
 # Текущее правило интерфейса: аварии из CSV (0) и диалога (10) — срочные.
 URGENT_PRIORITY_MAX = 10
@@ -215,7 +215,7 @@ def compare_plans(
     """Сравнивает два допустимых плана на одних входных данных и ограничениях.
 
     Модель времени/расстояний у обоих планов должна совпадать; эта функция
-    не обращается к дорожному провайдеру и не читает plan.meta.
+    не обращается к дорожному провайдеру и не зависит от метаданных выполнения.
     """
     return PlanComparison(
         evaluate_plan(left, tickets, engineers, frozen=frozen, not_before=not_before),

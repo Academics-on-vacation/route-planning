@@ -3,7 +3,7 @@ from copy import deepcopy
 import pytest
 
 from app.models.domain import Skills, SkillType, TransportType, Unassigned
-from app.validation import InvalidPlanError, validate_plan
+from app.solver.validation import InvalidPlanError, validate_plan
 
 
 def test_valid_plan_can_finish_after_window(plan_case):
