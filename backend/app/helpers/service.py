@@ -76,15 +76,20 @@ async def build_plan(
 
     plan = await run_in_threadpool(solver.solve, tickets, engineers)
     metrics = evaluate_plan(plan, tickets, engineers)
+    cost = metrics.cost
 
     plan.meta["cache_saved"] = await repository.save_leg_cache(session, cache.pending)
 
     # Снимок плана в базе: с него будет стартовать перепланирование.
     if persist:
-        plan.meta["plan_id"] = await repository.save_plan(session, region.id, work_date, plan)
+        plan.meta["plan_id"] = await repository.save_plan(
+            session, region.id, work_date, plan, cost=cost
+        )
 
-    logger.info("cost=%s", metrics.cost)
-    return plan.to_json(region.id, work_date)
+    result = plan.to_json(region.id, work_date)
+    result["metrics"]["cost"] = str(cost)
+    logger.info("cost=%s", cost)
+    return result
 
 
 def _empty(region_id: int, work_date: date | None, note: str) -> dict:
@@ -204,6 +209,7 @@ async def replan(
         route.geometry = solver._geometry(route.engeneer, route.stops)
 
     metrics = evaluate_plan(plan, tickets, engineers, frozen=frozen, not_before=at_minutes)
+    cost = metrics.cost
 
     plan.meta["cache_saved"] = await repository.save_leg_cache(session, cache.pending)
     plan.meta["replan"] = {
@@ -217,10 +223,14 @@ async def replan(
     }
 
     if persist:
-        plan.meta["plan_id"] = await repository.save_plan(session, region.id, work_date, plan)
+        plan.meta["plan_id"] = await repository.save_plan(
+            session, region.id, work_date, plan, cost=cost
+        )
 
-    logger.info("cost=%s", metrics.cost)
-    return plan.to_json(region.id, work_date)
+    result = plan.to_json(region.id, work_date)
+    result["metrics"]["cost"] = str(cost)
+    logger.info("cost=%s", cost)
+    return result
 
 
 def _stored_json(snapshot, region_id: int, work_date: date, public: dict, engineers) -> dict:
@@ -276,7 +286,7 @@ def _stored_json(snapshot, region_id: int, work_date: date, public: dict, engine
         "work_date": work_date.isoformat(),
         "routes": routes,
         "unassigned": (snapshot.meta or {}).get("unassigned", []),
-        "metrics": snapshot.metrics or {},
+        "metrics": {"cost": None, **(snapshot.metrics or {})},
         "meta": {
             **(snapshot.meta or {}),
             "stored": True,
@@ -306,4 +316,7 @@ async def stored_plan(session: AsyncSession, region: Region, work_date: date | N
 
     rows = await repository.list_requests(session, region.id, work_date)
     engineers = await load_engineers(session, region.id, region.office)
-    return _stored_json(snapshot, region.id, work_date, repository.public_ids(rows), engineers)
+    result = _stored_json(snapshot, region.id, work_date, repository.public_ids(rows), engineers)
+    cost = result["metrics"]["cost"]
+    logger.info("cost=%s", cost if cost is not None else "unavailable")
+    return result

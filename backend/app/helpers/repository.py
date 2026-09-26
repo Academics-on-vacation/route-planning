@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections import Counter
 from datetime import date, datetime, time, timedelta
+from decimal import Decimal
 
 from sqlalchemy import func, select, text, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -134,7 +135,9 @@ async def save_leg_cache(session: AsyncSession, rows: list[dict]) -> int:
     return result.rowcount
 
 
-async def save_plan(session: AsyncSession, region_id: int, work_date: date, plan) -> int:
+async def save_plan(
+    session: AsyncSession, region_id: int, work_date: date, plan, *, cost: Decimal
+) -> int:
     """Сохранить снимок плана и вернуть его id."""
     day = datetime.combine(work_date, time.min)
 
@@ -153,7 +156,8 @@ async def save_plan(session: AsyncSession, region_id: int, work_date: date, plan
         work_date=work_date,
         solver=str(plan.meta.get("solver", ""))[:64],
         provider=str(plan.meta.get("provider", ""))[:16],
-        metrics=plan.metrics(),
+        # JSONB не поддерживает Decimal напрямую; строка сохраняет точное значение.
+        metrics={**plan.metrics(), "cost": str(cost)},
         meta={**plan.meta, "unassigned": [u.to_json() for u in plan.unassigned]},
     )
 
