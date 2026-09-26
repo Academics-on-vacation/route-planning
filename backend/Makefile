@@ -14,7 +14,7 @@ migrate:
 	uv run --locked $(if $(ENV_FILE),--env-file "$(ENV_FILE)") alembic upgrade head
 
 test:
-	uv run --locked pytest
+	uv run --locked pytest -q
 
 lint:
 	uv run --locked ruff check .

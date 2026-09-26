@@ -1,6 +1,6 @@
 COMPOSE ?= docker compose
 
-.PHONY: install up down restart logs ps build migrate check compose-check backend-test lint format format-check install-hooks clean
+.PHONY: install up down restart logs ps build migrate test check compose-check backend-test lint format format-check install-hooks clean
 
 install:
 	$(MAKE) -C backend install
@@ -29,6 +29,10 @@ migrate:
 
 backend-test:
 	$(MAKE) -C backend test
+
+test:
+	$(MAKE) -C backend test
+	$(MAKE) -C frontend test
 
 check:
 	$(MAKE) -C backend check
