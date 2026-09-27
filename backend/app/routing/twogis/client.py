@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 KEY = os.environ.get("TWOGIS_API_KEY")
 
-TIMEOUT = 15
+TIMEOUT = 5
 
 RETRIES = 3  # попыток ПОСЛЕ первой
 BACKOFF_BASE = 0.8  # секунды до первого повтора
