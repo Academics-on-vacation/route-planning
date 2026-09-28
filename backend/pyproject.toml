@@ -8,6 +8,7 @@ dependencies = [
     "asyncpg==0.30.0",
     "fastapi==0.116.1",
     "psycopg[binary]==3.3.6",
+    "ortools==9.15.6755",
     "pydantic-settings==2.10.1",
     "python-multipart==0.0.22",
     "requests==2.34.2",

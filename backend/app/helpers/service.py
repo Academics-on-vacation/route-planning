@@ -18,6 +18,7 @@ from app.routing.interface import RoutingProvider
 from app.schemas import RequestCreate
 from app.solver.evaluation import evaluate_plan
 from app.solver.greedy import GreedySolver
+from app.solver.vrp import VRPSolver
 from app.solver.interface import Solver
 from app.solver.validation import validate_plan
 
@@ -65,7 +66,7 @@ async def build_plan(
     work_date: date | None = None,
     use_api: bool = True,
     persist: bool = True,
-    solver_factory: SolverFactory = GreedySolver,
+    solver_factory: SolverFactory = VRPSolver,
 ) -> PlanningResult:
     work_date = work_date or await repository.first_work_date(session, region.id)
     if work_date is None:
@@ -169,7 +170,7 @@ async def replan(
     work_date: date | None = None,
     use_api: bool = True,
     persist: bool = True,
-    solver_factory: SolverFactory = GreedySolver,
+    solver_factory: SolverFactory = VRPSolver,
 ) -> PlanningResult:
     """Пересчитать день с момента `at`, оставив сделанное нетронутым."""
     work_date = work_date or at.date()
