@@ -16,6 +16,8 @@ const summary = computed(() => {
     { k: "бригад", v: m.engineers_used },
     { k: "пробег", v: `${Math.round(m.total_distance_km)} км` },
     { k: "в пути", v: `${Math.round(m.total_travel_min / 60)} ч` },
+    { k: "простой", v: `${Math.round(m.total_wait_min / 60)} ч` },
+    { k: "окна", v: m.window_violations, bad: m.window_violations > 0 },
   ];
 });
 </script>
