@@ -2,11 +2,17 @@ from __future__ import annotations
 
 import logging
 
-from ortools.constraint_solver import routing_enums_pb2
-from ortools.constraint_solver import pywrapcp
+from ortools.constraint_solver import pywrapcp, routing_enums_pb2
 
 from app.models.domain import (
-    Engeneer, Plan, Point, Route, Stop, Ticket, TransportType, Unassigned,
+    Engeneer,
+    Plan,
+    Point,
+    Route,
+    Stop,
+    Ticket,
+    TransportType,
+    Unassigned,
 )
 from app.routing.interface import RoutingProvider
 from app.solver.interface import Solver
@@ -60,8 +66,7 @@ class VRPSolver(Solver):
             return Plan(
                 routes=[],
                 unassigned=[
-                    Unassigned(t, "no_engineer", "нет доступных исполнителей")
-                    for t in tickets
+                    Unassigned(t, "no_engineer", "нет доступных исполнителей") for t in tickets
                 ],
             )
 
@@ -114,9 +119,7 @@ class VRPSolver(Solver):
                 unassigned.append(Unassigned(t, "window", "некорректное окно"))
                 continue
             if t.duration_minutes <= 0:
-                unassigned.append(
-                    Unassigned(t, "window", "нулевая или отрицательная длительность")
-                )
+                unassigned.append(Unassigned(t, "window", "нулевая или отрицательная длительность"))
                 continue
             if not any(e.skills.has(t.skill) for e in engineers):
                 unassigned.append(
@@ -124,8 +127,7 @@ class VRPSolver(Solver):
                 )
                 continue
             if t.required_transport is not None and not any(
-                e.skills.has(t.skill) and e.transport == t.required_transport
-                for e in engineers
+                e.skills.has(t.skill) and e.transport == t.required_transport for e in engineers
             ):
                 unassigned.append(
                     Unassigned(
@@ -143,9 +145,7 @@ class VRPSolver(Solver):
                 for e in engineers
             )
             if not fits:
-                unassigned.append(
-                    Unassigned(t, "window", "окно не вписывается ни в одну смену")
-                )
+                unassigned.append(Unassigned(t, "window", "окно не вписывается ни в одну смену"))
                 continue
             eligible.append(t)
 
@@ -162,9 +162,7 @@ class VRPSolver(Solver):
     # Data
     # -----------------------------------------------------------------
 
-    def _build_data(
-        self, tickets: list[Ticket], engineers: list[Engeneer]
-    ) -> dict:
+    def _build_data(self, tickets: list[Ticket], engineers: list[Engeneer]) -> dict:
         """Узлы: 0..N-1 заявки; N..N+M-1 старты; N+M..N+2M-1 финиши."""
         N, M = len(tickets), len(engineers)
 
@@ -236,6 +234,7 @@ class VRPSolver(Solver):
         def dist_cb_maker(matrix):
             def cb(fi: int, ti: int) -> int:
                 return matrix[manager.IndexToNode(fi)][manager.IndexToNode(ti)]
+
             return cb
 
         def time_cb_maker(matrix):
@@ -243,17 +242,22 @@ class VRPSolver(Solver):
                 f = manager.IndexToNode(fi)
                 t = manager.IndexToNode(ti)
                 return matrix[f][t] + service[f]
+
             return cb
 
         dist_cb: list[int] = []
         time_cb: list[int] = []
         for eng in data["engineers"]:
-            dist_cb.append(routing.RegisterTransitCallback(
-                dist_cb_maker(data["dist_matrix_by_transport"][eng.transport])
-            ))
-            time_cb.append(routing.RegisterTransitCallback(
-                time_cb_maker(data["time_matrix_by_transport"][eng.transport])
-            ))
+            dist_cb.append(
+                routing.RegisterTransitCallback(
+                    dist_cb_maker(data["dist_matrix_by_transport"][eng.transport])
+                )
+            )
+            time_cb.append(
+                routing.RegisterTransitCallback(
+                    time_cb_maker(data["time_matrix_by_transport"][eng.transport])
+                )
+            )
 
         # 1) Стоимость = расстояние (вторая по важности цель после fixed cost).
         for v in range(data["num_vehicles"]):
@@ -300,9 +304,7 @@ class VRPSolver(Solver):
 
         for i, ticket in enumerate(data["tickets"]):
             idx = manager.NodeToIndex(i)
-            allowed = [
-                v for v, eng in enumerate(data["engineers"]) if self._can_serve(eng, ticket)
-            ]
+            allowed = [v for v, eng in enumerate(data["engineers"]) if self._can_serve(eng, ticket)]
             vehicle_var = routing.VehicleVar(idx)
             for v in range(data["num_vehicles"]):
                 if v not in allowed:
@@ -341,9 +343,7 @@ class VRPSolver(Solver):
     # Extract
     # -----------------------------------------------------------------
 
-    def _extract_plan(
-        self, data, manager, routing, time_dim, solution, pre_unassigned
-    ) -> Plan:
+    def _extract_plan(self, data, manager, routing, time_dim, solution, pre_unassigned) -> Plan:
         routes: list[Route] = []
         served: set[str] = set()
 
@@ -375,15 +375,17 @@ class VRPSolver(Solver):
                     arrive = start
                 end = start + ticket.duration_minutes
 
-                stops.append(Stop(
-                    ticket=ticket,
-                    depart=prev_depart,
-                    arrive=arrive,
-                    start=start,
-                    end=end,
-                    travel_minutes=travel_min,
-                    travel_km=travel_km,
-                ))
+                stops.append(
+                    Stop(
+                        ticket=ticket,
+                        depart=prev_depart,
+                        arrive=arrive,
+                        start=start,
+                        end=end,
+                        travel_minutes=travel_min,
+                        travel_km=travel_km,
+                    )
+                )
                 served.add(ticket.id)
 
                 prev_node = next_node

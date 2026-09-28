@@ -17,10 +17,9 @@ from app.routing.geometry import build_geometries
 from app.routing.interface import RoutingProvider
 from app.schemas import RequestCreate
 from app.solver.evaluation import evaluate_plan
-from app.solver.greedy import GreedySolver
-from app.solver.vrp import VRPSolver
 from app.solver.interface import Solver
 from app.solver.validation import validate_plan
+from app.solver.vrp import VRPSolver
 
 logger = logging.getLogger(__name__)
 SolverFactory = Callable[[RoutingProvider, RoutingProvider], Solver]
