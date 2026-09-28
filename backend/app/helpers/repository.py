@@ -85,6 +85,18 @@ async def soft_delete_request(session: AsyncSession, request_id: int) -> bool:
     return True
 
 
+async def hard_delete_request(session: AsyncSession, request_id: int) -> bool:
+    """Безвозвратно удалить заявку из БД (для тестовых нужд, например
+    очистки синтетических аварий после проверки планирования).
+    Связанные строки stop удаляются каскадно на уровне БД."""
+    row = await session.get(Request, request_id)
+    if row is None:
+        return False
+    await session.delete(row)
+    await session.commit()
+    return True
+
+
 async def request_exists(session: AsyncSession, region_id: int, external_id: str) -> bool:
     found = await session.scalar(
         select(Request.id).where(Request.region_id == region_id, Request.external_id == external_id)

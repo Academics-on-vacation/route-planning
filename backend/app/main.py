@@ -173,6 +173,18 @@ async def delete_request(
         raise HTTPException(404, f"Заявки {request_id} нет")
 
 
+@app.delete("/api/requests/{request_id}/hard", status_code=204)
+async def hard_request(
+    request_id: int,
+    session: AsyncSession = Depends(get_session),
+) -> None:
+    """Полное безвозвратное удаление заявки из БД (включая связанные стопы
+    в маршрутах). Для тестовых нужд — например, чтобы удалить синтетическую
+    аварию после проверки планирования."""
+    if not await repository.hard_delete_request(session, request_id):
+        raise HTTPException(404, f"Заявки {request_id} нет")
+
+
 @app.get("/api/regions/{region_id}/engineers")
 async def get_engineers(
     region_id: int,
