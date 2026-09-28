@@ -96,13 +96,13 @@ const step = computed(() => {
       <svg class="w-[232px] h-[164px]" viewBox="0 0 200 140" aria-hidden="true">
         <defs>
           <linearGradient id="ld-signal" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stop-color="#ffcc00" stop-opacity=".15" />
-            <stop offset="50%" stop-color="#ffcc00" stop-opacity="1" />
-            <stop offset="100%" stop-color="#ffcc00" stop-opacity=".15" />
+            <stop offset="0%" stop-color="#ffc800" stop-opacity=".15" />
+            <stop offset="50%" stop-color="#ffc800" stop-opacity="1" />
+            <stop offset="100%" stop-color="#ffc800" stop-opacity=".15" />
           </linearGradient>
           <radialGradient id="ld-ground" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stop-color="#ffcc00" stop-opacity=".35" />
-            <stop offset="100%" stop-color="#ffcc00" stop-opacity="0" />
+            <stop offset="0%" stop-color="#ffc800" stop-opacity=".35" />
+            <stop offset="100%" stop-color="#ffc800" stop-opacity="0" />
           </radialGradient>
           <filter id="ld-glow" x="-60%" y="-60%" width="220%" height="220%">
             <feGaussianBlur stdDeviation="2.6" result="b" />

@@ -11,7 +11,6 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { RouterLink } from "vue-router";
 
-import KitPanel from "../components/KitPanel.vue";
 import RouteLoader from "../components/RouteLoader.vue";
 import TransportChip from "../components/TransportChip.vue";
 import {
@@ -194,11 +193,7 @@ watch([plan, () => props.engineerId], async () => {
       <!-- Шапка -->
       <div class="panel px-3 py-2.5">
         <div class="flex items-center gap-2">
-          <i
-            class="w-3 h-3 rounded-full shrink-0"
-            :style="{ background: color }"
-          />
-          <h1 class="text-[17px] font-semibold leading-tight min-w-0 truncate">
+          <h1 class="">
             {{ route?.engineer_name ?? engineer?.name ?? "Инженер" }}
           </h1>
           <TransportChip :kind="transportOf(engineerId)" />
@@ -210,7 +205,7 @@ watch([plan, () => props.engineerId], async () => {
           </RouterLink>
         </div>
 
-        <p class="mt-0.5 text-[12px] text-muted first-letter:uppercase">
+        <p class="">
           {{ dayLabel }}
           <template v-if="engineer">
             · смена {{ hhmm(engineer.shift_start) }}–{{
@@ -221,10 +216,10 @@ watch([plan, () => props.engineerId], async () => {
 
         <dl v-if="summary.length" class="flex flex-wrap gap-x-5 gap-y-1 mt-2">
           <div v-for="s in summary" :key="s.k">
-            <dt class="text-[9.5px] uppercase tracking-[0.1em] text-muted">
+            <dt class="uppercase">
               {{ s.k }}
             </dt>
-            <dd class="num text-[15px]" :class="s.lead ? 'font-semibold' : ''">
+            <dd class="" :class="s.lead ? 'font-semibold' : ''">
               {{ s.v }}
             </dd>
           </div>
@@ -241,13 +236,11 @@ watch([plan, () => props.engineerId], async () => {
         </p>
       </div>
 
-      <KitPanel :visits="visits" />
-
       <!-- Визиты -->
       <div v-if="route" class="flex flex-col gap-1.5">
         <template v-for="(v, i) in visits" :key="v.stop.request_id">
-          <p class="num flex items-center gap-2 px-3 text-[11px] text-muted">
-            <span class="h-3 w-px bg-hair-2" />
+          <p class="flex items-center">
+            <span class="" />
             <template v-if="v.stop.travel_min === 0 && !v.stop.travel_km">
               без переезда, сразу следующая
             </template>
@@ -260,67 +253,43 @@ watch([plan, () => props.engineerId], async () => {
             </span>
           </p>
 
-          <article
-            class="panel px-3 py-2.5 border-l-4 break-inside-avoid"
-            :style="{ borderLeftColor: color }"
-          >
+          <article class="panel p-3" :style="{ borderLeftColor: color }">
             <div class="flex items-baseline gap-2">
-              <b class="num text-[19px] leading-none">
+              <b class="">
                 {{ hhmm(v.stop.start_at) }}
               </b>
-              <span class="num text-[12px] text-muted">
-                до {{ hhmm(v.stop.end_at) }}
-              </span>
-              <span
-                v-if="v.urgent"
-                class="ml-auto shrink-0 px-1.5 py-0.5 rounded bg-crit text-white text-[10px] font-semibold uppercase tracking-wide"
-              >
-                авария
-              </span>
-              <span
-                class="num shrink-0 text-[11px] text-muted"
-                :class="v.urgent ? '' : 'ml-auto'"
-              >
+              <span class=""> до {{ hhmm(v.stop.end_at) }} </span>
+              <span v-if="v.urgent" class=""> авария </span>
+              <span class="" :class="v.urgent ? '' : 'ml-auto'">
                 {{ v.seq }}/{{ visits.length }}
               </span>
             </div>
 
-            <p class="mt-1 text-[14px] leading-snug">
+            <p class="">
               {{ v.req?.address ?? "адрес не указан" }}
             </p>
-            <p v-if="v.req?.district" class="text-[11.5px] text-muted">
+            <p v-if="v.req?.district" class="">
               {{ v.req.district }}
             </p>
 
-            <dl class="grid grid-cols-2 gap-x-3 gap-y-1 mt-2 text-[11.5px]">
+            <dl class="">
               <div>
-                <dt class="text-muted">Окно заявки</dt>
+                <dt class="">Окно заявки</dt>
                 <dd class="num">
                   {{ hhmm(v.req?.window_start) }}–{{ hhmm(v.req?.window_end) }}
                 </dd>
               </div>
               <div>
-                <dt class="text-muted">Работа</dt>
-                <dd class="num">{{ v.req?.duration_min }} мин</dd>
+                <dt class="d">Работа</dt>
+                <dd class="">{{ v.req?.duration_min }} мин</dd>
               </div>
               <div class="col-span-2">
-                <dt class="text-muted">Что делаем</dt>
+                <dt class="">Что делаем</dt>
                 <dd>{{ SKILLS[v.req?.skill] ?? v.req?.skill ?? "—" }}</dd>
               </div>
               <div class="col-span-2">
-                <dt class="text-muted">Запас до закрытия окна</dt>
-                <dd
-                  class="num font-semibold"
-                  :class="
-                    v.slack == null
-                      ? ''
-                      : v.slack < 0
-                        ? 'text-crit'
-                        : v.slack < 30
-                          ? 'text-serious'
-                          : 'text-good'
-                  "
-                >
+                <dt class="">Запас до закрытия окна</dt>
+                <dd class="">
                   {{
                     v.slack == null
                       ? "—"
@@ -332,12 +301,12 @@ watch([plan, () => props.engineerId], async () => {
               </div>
             </dl>
 
-            <div v-if="v.req" class="flex items-center gap-2 mt-2 print:hidden">
+            <div v-if="v.req" class="flex items-center gap-2 mt-2">
               <a
                 :href="navUrl(v.req)"
                 target="_blank"
                 rel="noopener"
-                class="flex-1 text-center px-3 py-2 rounded-lg bg-brand text-black text-[13px] font-semibold hover:bg-brand-deep transition-colors"
+                class="flex-1 text-center px-3 py-2 rounded-lg"
               >
                 Проложить маршрут
               </a>
@@ -345,7 +314,7 @@ watch([plan, () => props.engineerId], async () => {
                 :href="gisUrl(v.req)"
                 target="_blank"
                 rel="noopener"
-                class="px-3 py-2 rounded-lg border border-hair-2 text-[12px] text-muted hover:text-ink hover:bg-panel-2 transition-colors"
+                class="px-3 py-2 rounded-lg border"
               >
                 2ГИС
               </a>

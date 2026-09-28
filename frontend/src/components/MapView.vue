@@ -149,7 +149,7 @@ function redraw() {
     })
       .bindPopup(
         `<b>Офис региона «${region.title}»</b><br>${region.office_address ?? ""}<br>
-         <span style="color:#6e6e76">отсюда инженеры начинают день</span>`,
+         <span style="color:#7e7e7e">отсюда инженеры начинают день</span>`,
       )
       .addTo(layer);
     bounds.push([region.office_lat, region.office_lon]);
