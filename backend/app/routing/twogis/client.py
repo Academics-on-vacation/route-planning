@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import os
 import random
+import re
 import time
 from collections.abc import Iterable
 from dataclasses import dataclass
@@ -17,15 +18,53 @@ from app.routing.twogis import cache
 
 logger = logging.getLogger(__name__)
 
-KEY = os.environ.get("TWOGIS_API_KEY")
+LOCAL_KEYS: list[str] = [
+    "9121801e-66c2-451b-a8dc-b3d6bb780795",
+    "db573e6b-0eda-4ab0-a91e-717ccc1c8df8",
+    "71ada5ad-f2a9-42e4-9ed2-2b1c36faa712",
+    "dbe5d172-baa8-4f8d-8a0f-706d30ae2d9c",
+    "ff653d2e-dfb6-4a55-8ce6-e1f4db340670",
+    "23d1bebb-3a48-4d01-89f6-a870cf7e4a2a",
+    "8c7bfb89-6eb0-4adf-8d8b-06d4f945855c",
+    "6bf28269-afd2-4afc-b2d6-d106196283ce",
+    "d996a3e9-5ecf-4868-888b-aaad2feeab95",
+    "924251c3-ff7b-4106-bd00-d20f6f0a61ad",
+]
+
+
+def _load_keys() -> list[str]:
+    found: list[str] = []
+    for raw in (os.environ.get("TWOGIS_API_KEYS", ""), os.environ.get("TWOGIS_API_KEY", "")):
+        found += [part for part in re.split(r"[\s,;]+", raw) if part]
+    found += LOCAL_KEYS
+
+    seen: set[str] = set()
+    keys: list[str] = []
+    for key in found:
+        if key not in seen:
+            seen.add(key)
+            keys.append(key)
+    return keys
+
+
+KEYS = _load_keys()
+# Совместимость: старые скрипты и ручные проверки смотрят на client.KEY.
+KEY = KEYS[0] if KEYS else None
+
+# Каким ключом ходим сейчас. Переключение липкое: уйдя с мёртвого ключа,
+# остальные плечи идут уже по новому, а не долбятся в исчерпанный
+# по четыре раза каждое.
+_key_index = 0
 
 TIMEOUT = 5
 
-RETRIES = 3  # попыток ПОСЛЕ первой
+RETRIES = 3  # попыток ПОСЛЕ первой одним ключом
 BACKOFF_BASE = 0.8  # секунды до первого повтора
 BACKOFF_CAP = 8.0  # потолок одной паузы
 
 RETRY_STATUS = frozenset({408, 425, 429, 500, 502, 503, 504})
+
+KEY_STATUS = frozenset({401})
 
 ROUTING_URL = "https://routing.api.2gis.com/routing/7.0.0/global"
 TRANSIT_URL = "https://routing.api.2gis.com/public_transport/2.0"
@@ -259,44 +298,92 @@ def _pause(attempt: int, asked: float | None) -> float:
     return delay * (0.5 + random.random() / 2)
 
 
+def _rotate(used: int) -> bool:
+    """Перейти на следующий ключ. False — ключей вообще нет.
+
+    Сверяемся с `used`: если параллельный вызов уже переключил ключ,
+    второй раз крутить не надо, иначе на двух потоках мы перепрыгнем
+    через живой ключ.
+    """
+    global _key_index
+    if not KEYS:
+        return False
+    if _key_index == used:
+        _key_index = (used + 1) % len(KEYS)
+    return True
+
+
 def _post(url: str, body: dict):
-    """POST с повторами. Наружу отдаёт либо разобранный ответ, либо
-    RuntimeError последней попытки — вызывающий код на исключении
-    откатывается к оценке по прямой."""
+    """POST с повторами и сменой ключа.
+
+    Порядок такой: четыре попытки текущим ключом с нарастающей паузой;
+    не вышло — берём следующий ключ и начинаем счёт заново. Обошли все
+    ключи — отдаём наружу ошибку последней попытки, и вызывающий код
+    откатывается к оценке по прямой.
+
+    Ошибка, которую повторять бессмысленно (400, 404 и прочее, чего нет
+    в RETRY_STATUS), по-прежнему летит наружу сразу: перебирать из-за
+    неё ключи незачем, дело не в них.
+    """
     last: Exception | None = None
+    tried_keys = 0
 
-    for attempt in range(RETRIES + 1):
-        asked = None
-        try:
-            resp = requests.post(url, params={"key": KEY}, json=body, timeout=TIMEOUT)
-        except requests.RequestException as e:
-            last = RuntimeError(f"2ГИС недоступен: {type(e).__name__}")
-        else:
-            if resp.ok:
-                try:
-                    return resp.json()
-                except ValueError:
-                    last = RuntimeError("2ГИС: ответ не разобрался как JSON")
+    while tried_keys < max(1, len(KEYS)):
+        used = _key_index
+        key = KEYS[used] if KEYS else None
+        tried_keys += 1
+        switch = False
+
+        for attempt in range(RETRIES + 1):
+            asked = None
+            try:
+                resp = requests.post(url, params={"key": key}, json=body, timeout=TIMEOUT)
+            except requests.RequestException as e:
+                last = RuntimeError(f"2ГИС недоступен: {type(e).__name__}")
             else:
-                last = RuntimeError(f"2ГИС {resp.status_code}: {resp.text[:200]}")
-                if resp.status_code not in RETRY_STATUS:
-                    raise last
-                asked = _retry_after(resp)
+                if resp.ok:
+                    try:
+                        return resp.json()
+                    except ValueError:
+                        last = RuntimeError("2ГИС: ответ не разобрался как JSON")
+                else:
+                    last = RuntimeError(f"2ГИС {resp.status_code}: {resp.text[:200]}")
+                    if resp.status_code in KEY_STATUS:
+                        # Ключ отвергли — ждать нечего, меняем немедленно.
+                        switch = True
+                        break
+                    if resp.status_code not in RETRY_STATUS:
+                        raise last
+                    asked = _retry_after(resp)
 
-        if attempt == RETRIES:
+            if attempt == RETRIES:
+                switch = True
+                break
+
+            pause = _pause(attempt, asked)
+            logger.warning(
+                "2ГИС[ключ %d из %d]: попытка %d из %d не удалась (%s), повтор через %.1f с",
+                used + 1,
+                len(KEYS) or 1,
+                attempt + 1,
+                RETRIES + 1,
+                last,
+                pause,
+            )
+            time.sleep(pause)
+
+        if not switch or not _rotate(used):
             break
 
-        pause = _pause(attempt, asked)
         logger.warning(
-            "2ГИС: попытка %d из %d не удалась (%s), повтор через %.1f с",
-            attempt + 1,
-            RETRIES + 1,
+            "2ГИС: ключ %d из %d не отвечает (%s), переключаюсь на %d",
+            used + 1,
+            len(KEYS),
             last,
-            pause,
+            _key_index + 1,
         )
-        time.sleep(pause)
 
-    logger.error("2ГИС: %d попыток подряд без ответа (%s)", RETRIES + 1, last)
+    logger.error("2ГИС: ключи кончились (%d шт.), последняя ошибка: %s", len(KEYS) or 1, last)
     assert last is not None
     raise last
 

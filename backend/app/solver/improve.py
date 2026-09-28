@@ -50,6 +50,9 @@ def schedule(
     """
     Цена маршрута
     """
+    if any(not compatible(eng, t) for t in tickets):
+        return None
+
     where, now = eng.start_point, eng.work_shift_start_minutes
     stops: list[Stop] = []
     cost = 0.0
