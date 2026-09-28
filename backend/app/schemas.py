@@ -31,7 +31,7 @@ class RequestCreate(BaseModel):
     @classmethod
     def _drop_timezone(cls, value: datetime) -> datetime:
         """В БД window_* — naive TIMESTAMP (локальное время, без зоны),
-        как и везде в системе (см. minutes_of/at в app/models/domain.py).
+        как в адаптерах app/helpers/mapping.py и app/presentation.py.
         Если клиент прислал дату с зоной (например, "...Z" из Swagger) —
         просто отбрасываем tzinfo, а не конвертируем: число часов/минут,
         которое ввёл клиент, и есть локальное время."""

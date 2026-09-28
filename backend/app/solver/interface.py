@@ -1,12 +1,10 @@
+from abc import ABC, abstractmethod
+
 from ..models.domain import Engeneer, Plan, Ticket
 
 
-class Solver:
-    def __init__(self):
-        pass
-
-    def solve(self, tickets: list[Ticket], engeneers: list[Engeneer]) -> Plan:
+class Solver(ABC):
+    @abstractmethod
+    def solve(self, tickets: list[Ticket], engineers: list[Engeneer]) -> Plan:
+        """Построить план для переданного набора заявок и инженеров."""
         raise NotImplementedError
-
-    def get_name(self) -> str:
-        return "Solver"

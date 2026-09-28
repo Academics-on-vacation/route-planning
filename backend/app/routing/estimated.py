@@ -1,6 +1,25 @@
 import math
 
-from ..models.domain import Point, TransportType
+from app.models.domain import Point, TransportType
+from app.routing.interface import RoutingProvider
+
+
+class EstimatedProvider(RoutingProvider):
+    """Приближённые время, расстояние и геометрия без внешних запросов."""
+
+    def get_leg(
+        self, origin: Point, destination: Point, transport: TransportType, departure_minutes: int
+    ) -> tuple[int, float]:
+        return estimate(origin, destination, transport, departure_minutes)
+
+    def get_geometry(
+        self, origin: Point, destination: Point, transport: TransportType, departure_minutes: int
+    ) -> list[list[float]]:
+        return [list(origin.coords), list(destination.coords)]
+
+    @property
+    def diagnostics(self) -> dict:
+        return {"provider": "haversine", "api_calls": 0, "cache_hits": 0, "cache_saved": 0}
 
 
 # ОЦЕНКА маршрута
@@ -51,11 +70,3 @@ CONGESTION = [
     (20 * 60, 1.50, 1.15),  # вечерний пик
     (24 * 60, 0.85, 0.95),
 ]
-
-REASONS = {
-    "skill": "Нет свободного исполнителя с нужным навыком",
-    "transport": "Нужен другой транспорт",
-    "capacity": "Все подходящие исполнители заняты в это окно",
-    "distance": "Слишком далеко: переезд длиннее допустимого",
-    "window": "По реальной дороге заявка не успевает в окно",
-}

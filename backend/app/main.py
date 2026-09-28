@@ -9,9 +9,12 @@ from app import geocoder
 from app.config import settings
 from app.db import get_session
 from app.helpers import repository, service
+from app.helpers.mapping import region_from_row
 from app.importing.router import router as import_router
 from app.logging_config import configure_logging
 from app.models.domain import Region
+from app.presentation import engineer_to_json as domain_engineer_to_json
+from app.presentation import planning_result_to_json, region_to_json, ticket_to_json
 from app.schemas import EngineerStartPointUpdate, RequestCreate, engineer_to_json, request_to_json
 
 configure_logging()
@@ -49,7 +52,7 @@ async def _region(session: AsyncSession, region_id: int) -> Region:
 @app.get("/api/regions")
 async def get_regions(session: AsyncSession = Depends(get_session)) -> list[dict]:
     rows = await repository.list_regions(session)
-    return [Region.from_row(r).to_json() for r in rows]
+    return [region_to_json(region_from_row(r)) for r in rows]
 
 
 @app.get("/api/regions/{region_id}/requests")
@@ -66,7 +69,7 @@ async def get_requests(
         return []
 
     tickets = await service.load_tickets(session, region_id, work_date, region.office)
-    return [t.to_json(work_date) for t in tickets]
+    return [ticket_to_json(t, work_date) for t in tickets]
 
 
 @app.post("/api/regions/{region_id}/requests", status_code=201)
@@ -102,13 +105,14 @@ async def post_replan(
     options = body.get("options") or {}
     region = await _region(session, int(body.get("region_id", 1)))
     try:
-        return await service.replan(
+        result = await service.replan(
             session,
             region,
             at=at,
             work_date=date.fromisoformat(raw_date) if raw_date else None,
             use_api=bool(options.get("use_api", False)),
         )
+        return planning_result_to_json(result)
     except service.NoActivePlanError:
         raise HTTPException(
             409, "на эту дату нет действующего плана — сначала рассчитайте день"
@@ -178,7 +182,7 @@ async def get_engineers(
     region = await _region(session, region_id)
     day = work_date or await repository.first_work_date(session, region_id) or date.today()
     engineers = await service.load_engineers(session, region_id, region.office)
-    return [e.to_json(day) for e in engineers]
+    return [domain_engineer_to_json(e, day) for e in engineers]
 
 
 @app.post("/api/plan")
@@ -192,12 +196,13 @@ async def post_plan(
     options = body.get("options") or {}
     raw_date = body.get("work_date")
     region = await _region(session, int(body.get("region_id", 1)))
-    return await service.build_plan(
+    result = await service.build_plan(
         session,
         region,
         work_date=date.fromisoformat(raw_date) if raw_date else None,
         use_api=bool(options.get("use_api", False)),
     )
+    return planning_result_to_json(result)
 
 
 @app.get("/api/plan")

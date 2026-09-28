@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-MIN_STEP = 0.00002
+from app.routing.geometry import thin
 
 
 def to_geometry_points(selection: str) -> list[list[float]]:
@@ -43,11 +43,3 @@ def leg_points(payload: dict | None) -> list[list[float]]:
             points += _from_segments(alternatives[0].get("geometry"))
 
     return thin(points)
-
-
-def thin(points: list[list[float]]) -> list[list[float]]:
-    out: list[list[float]] = []
-    for p in points:
-        if not out or abs(p[0] - out[-1][0]) + abs(p[1] - out[-1][1]) > MIN_STEP:
-            out.append(p)
-    return out
