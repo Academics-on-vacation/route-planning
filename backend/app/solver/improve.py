@@ -29,6 +29,21 @@ def urgency(ticket: Ticket) -> float:
     return BASE_PRIORITY / max(1, getattr(ticket, "priority", None) or BASE_PRIORITY)
 
 
+def compatible(eng: Engeneer, ticket: Ticket) -> bool:
+    """Может ли эта бригада в принципе взять эту заявку.
+
+    Первая фаза такую проверку делает, вторая — не делала, и локальный
+    поиск спокойно переставлял заявку на бригаду без нужного навыка.
+    Проверка стоит здесь, потому что через schedule() проходят все
+    перестановки без исключения.
+    """
+    if not eng.skills.has(ticket.skill):
+        return False
+    if ticket.required_transport is not None and ticket.required_transport != eng.transport:
+        return False
+    return True
+
+
 def schedule(
     eng: Engeneer, tickets: list[Ticket], leg, max_leg_min: int | None = None
 ) -> tuple[list[Stop], float] | None:
