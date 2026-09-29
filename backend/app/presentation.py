@@ -35,7 +35,7 @@ def ticket_to_json(ticket: Ticket, day: date) -> dict:
         "required_transport": ticket.required_transport.value
         if ticket.required_transport
         else None,
-        "equipment": {"Роутер": 3, "Кабель LAN, м": 30, "Козел светлый": 4},
+        "equipment": {"Роутер": 3, "Кабель LAN, м": 30},
     }
 
 
