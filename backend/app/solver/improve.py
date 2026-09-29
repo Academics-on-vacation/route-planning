@@ -45,7 +45,11 @@ def compatible(eng: Engeneer, ticket: Ticket) -> bool:
 
 
 def schedule(
-    eng: Engeneer, tickets: list[Ticket], leg, max_leg_min: int | None = None
+    eng: Engeneer,
+    tickets: list[Ticket],
+    leg,
+    max_leg_min: int | None = None,
+    max_leg_km: int | None = None,
 ) -> tuple[list[Stop], float] | None:
     """
     Цена маршрута
@@ -63,6 +67,8 @@ def schedule(
         start = max(arrive, ticket.work_start)
         end = start + ticket.duration_minutes
 
+        if max_leg_km is not None and km > max_leg_km:
+            return None
         if max_leg_min is not None and minutes > max_leg_min:
             return None
         if start > ticket.work_finish or end > eng.work_shift_end_minutes:
@@ -82,6 +88,7 @@ def improve(
     engineers: list[Engeneer],
     leg,
     max_leg_min: int | None = None,
+    max_leg_km: int | None = None,
     max_rounds: int = 12,
 ) -> tuple[dict[int, list[Ticket]], list[Ticket], dict]:
     """
@@ -101,7 +108,7 @@ def improve(
     def price(eng_id: int, tickets: list[Ticket]) -> float | None:
         key = (eng_id, tuple(t.id for t in tickets))
         if key not in cache:
-            got = schedule(by_id[eng_id], tickets, leg, max_leg_min)
+            got = schedule(by_id[eng_id], tickets, leg, max_leg_min, max_leg_km)
             cache[key] = None if got is None else got[1]
         return cache[key]
 

@@ -11,6 +11,7 @@ from app.solver.interface import Solver
 logger = logging.getLogger(__name__)
 
 MAX_LEG_MIN = 90
+MAX_LEG_KM = 50
 REASONS = {
     "skill": "Нет свободного исполнителя с нужным навыком",
     "transport": "Нужен другой транспорт",
@@ -27,11 +28,13 @@ class GreedySolver(Solver):
         estimate_provider: RoutingProvider,
         max_leg_min: int = MAX_LEG_MIN,
         polish: bool = True,
+        max_leg_km: float = MAX_LEG_KM,
     ):
         self.travel_provider = travel_provider
         self.estimate_provider = estimate_provider
         self.max_leg_min = max_leg_min
         self.polish = polish
+        self.max_leg_km = max_leg_km
 
     def solve(self, tickets: list[Ticket], engineers: list[Engeneer]) -> Plan:
         routes = {e.id: Route(e) for e in engineers}
@@ -59,6 +62,7 @@ class GreedySolver(Solver):
             engineers,
             self.estimate_provider.get_leg,
             self.max_leg_min,
+            self.max_leg_km,
         )
         for eng in engineers:
             got = replay(eng, order[eng.id], self.travel_provider.get_leg)
@@ -96,7 +100,7 @@ class GreedySolver(Solver):
             minutes, km = self.estimate_provider.get_leg(
                 position[eng.id], ticket.point, eng.transport, free_at[eng.id]
             )
-            if minutes > self.max_leg_min:
+            if minutes > self.max_leg_min or km > self.max_leg_km:
                 rejected.add("distance")
                 continue
             fit = self._fit(ticket, eng, free_at[eng.id], minutes)
@@ -118,7 +122,7 @@ class GreedySolver(Solver):
             minutes, km = self.travel_provider.get_leg(
                 position[eng.id], ticket.point, eng.transport, depart
             )
-            if minutes > self.max_leg_min:
+            if minutes > self.max_leg_min or km > self.max_leg_km:
                 continue
             fit = self._fit(ticket, eng, depart, minutes)
             if fit is None:
